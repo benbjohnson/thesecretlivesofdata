@@ -1,0 +1,23 @@
+{
+  "name": "tsld",
+  "repo": "benbjohnson/tsld",
+  "description": "The Secret Lives of Data",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+  },
+  "development": {
+    "component/assert": "*",
+    "jkroso/equals": "*",
+    "visionmedia/mocha": "*",
+    "visionmedia/mocha-cloud": "*",
+    "visionmedia/mocha-matrix": "*"
+  },
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": [
+    "lib/index.js",
+    "lib/tsld.js"
+  ],
+  "remotes": []
+}
