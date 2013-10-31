@@ -17,7 +17,9 @@
   "main": "lib/index.js",
   "scripts": [
     "lib/index.js",
-    "lib/tsld.js"
+    "lib/tsld.js",
+    "lib/raft/raft.js",
+    "lib/raft/node.js"
   ],
   "remotes": []
 }
