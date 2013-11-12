@@ -3,22 +3,18 @@
   <head>
     <title>tests</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" type="text/css" href="../build/build.css">
-    <script src="mocha/mocha.js"></script>
-    <script src="sinon/sinon-1.7.3.js"></script>
-    <script src="../build/build.js"></script>
+    <script src="mocha.js"></script>
+    <script src="chai.js"></script>
+    <script src="sinon-1.7.3.js"></script>
     <script>
       mocha.setup({ ui: 'bdd' })
-      window.mocha.setup({ ui: 'bdd', reporter: require('visionmedia-mocha-matrix') });
     </script>
   </head>
   <body>
     <div id="mocha"></div>
-    <script src="tsld.js"></script>
+    <script data-main="index.js" src="../js/require.js"></script>
     <script>
       if (window.onerror) window.onerror = console.log;
-      if (window.mochaPhantomJS) mochaPhantomJS.run()
-      else mocha.run();
     </script>
   </body>
 </html>
