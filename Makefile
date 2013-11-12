@@ -10,6 +10,5 @@ lint:
 	$(LINT) js/raft/*.js
 
 clean:
-	rm -fr build components template.js
 
 .PHONY: clean test
