@@ -760,22 +760,11 @@ Frame.prototype.duration = function () {
  * Executes a function after a given delay.
  *
  * @param {Function}
- * @param {Number}
  */
-Frame.prototype.timer = function (fn, interval, delay) {
-    if (delay === undefined) {
-        delay = 0;
-    }
-    delay = Math.max(0, delay);
-
-    var timer = new Timer(fn, this.playhead() + delay, interval);
+Frame.prototype.timer = function (fn) {
+    var timer = new Timer(fn);
+    timer.startTime(this.playhead());
     this._timers.push(timer);
-
-    // Execute timer immediately if there is no delay.
-    if (delay === 0) {
-        timer.run();
-    }
-
     return timer;
 };
 
@@ -814,14 +803,27 @@ Frame.prototype.tween = function (fn, startValue, endValue, duration, delay) {
  * Retrieves a list of active timers sorted by time until next frame.
  */
 Frame.prototype.timers = function () {
-    var playhead = this.playhead();
+    var i, timer, playhead = this.playhead();
+
+    // Stop all timers that don't have a next play time.
+    for (i = 0; i < this._timers.length; i += 1) {
+        timer = this._timers[i];
+        if (timer.until(playhead) === null) {
+            timer.stop();
+        }
+    }
+
+    // Remove all stopped timers.
     this._timers = this._timers.filter(function (timer) {
         return timer.running();
     });
+
+    // Sort remaining timers by next play time.
     this._timers = this._timers.sort(function (a, b) {
         var ret = a.until(playhead) - b.until(playhead);
         return (ret !== 0 ? ret : a.id() - b.id());
     });
+
     return this._timers;
 };
 
@@ -903,12 +905,76 @@ module.exports = functor;
 
 
 });
+require.register("playback/lib/layout.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+/**
+ * Initializes a new Layout instance.
+ */
+function Layout() {
+    this._player = null;
+}
+
+/**
+ * Initializes the layout. This is called when the player is set on
+ * the layout.
+ */
+Layout.prototype.initialize = function () {
+    // Implemented by subclass.
+};
+
+/**
+ * Sets or retrieves the player associated with the layout.
+ *
+ * @return {Player|Layout}
+ */
+Layout.prototype.player = function (value) {
+    if (arguments.length === 0) {
+        return this._player;
+    }
+    this._player = value;
+    this.initialize();
+    return this;
+};
+
+/**
+ * Retrieves the current frame on the player.
+ *
+ * @return {Frame}
+ */
+Layout.prototype.current = function () {
+    var player = this.player();
+    if (player === null) {
+        return null;
+    }
+    return player.current();
+};
+
+/**
+ * Retrieves the current frame's model.
+ *
+ * @return {Model}
+ */
+Layout.prototype.model = function () {
+    var current = this.current();
+    if (current === null) {
+        return null;
+    }
+    return current.model();
+};
+
+module.exports = Layout;
+
+});
 require.register("playback/lib/playback.js", function(exports, require, module){
 
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var Player = require('./player');
+var Player = require('./player'),
+    Layout = require('./layout');
 
 /**
  * Initializes a new Playback instance.
@@ -921,6 +987,13 @@ function Playback() {
  */
 Playback.prototype.player = function () {
     return new Player();
+};
+
+/**
+ * Retrieves the layout superclass.
+ */
+Playback.prototype.layout = function () {
+    return new Layout();
 };
 
 module.exports = Playback;
@@ -949,6 +1022,7 @@ function Player() {
     this._prevtick = null;
     this._ticker = null;
     this._model = null;
+    this._layout = null;
 }
 
 /**
@@ -1123,6 +1197,29 @@ Player.prototype.model = function (value) {
 };
 
 /**
+ * Sets or retrieves the layout.
+ *
+ * @return {Player|Layout}
+ */
+Player.prototype.layout = function (value) {
+    if (arguments.length === 0) {
+        return this._layout;
+    }
+
+    if (this._layout !== null) {
+        this._layout.player(null);
+    }
+
+    this._layout = value;
+
+    if (this._layout !== null) {
+        this._layout.player(this);
+    }
+
+    return this;
+};
+
+/**
  * Updates the player and issues the 'update' callback. This is called
  * whenever the playhead is changed.
  *
@@ -1173,13 +1270,14 @@ require.register("playback/lib/timer.js", function(exports, require, module){
 /**
  * Initializes a new Timer instance.
  */
-function Timer(fn, startTime, interval) {
+function Timer(fn) {
     this._id = Timer.nextid;
     Timer.nextid += 1;
 
     this._fn = fn;
-    this._startTime = startTime;
-    this._interval = interval;
+    this._startTime = undefined;
+    this._endTime = undefined;
+    this._interval = undefined;
     this._running = true;
 }
 
@@ -1199,8 +1297,26 @@ Timer.prototype.id = function () {
  *
  * @return {Number}
  */
-Timer.prototype.startTime = function () {
-    return this._startTime;
+Timer.prototype.startTime = function (value) {
+    if (arguments.length === 0) {
+        return this._startTime;
+    }
+    this._startTime = value;
+    return this;
+};
+
+/**
+ * Retrieves the end time of the timer. Returns undefined if there is
+ * no end time.
+ *
+ * @return {Number}
+ */
+Timer.prototype.endTime = function (value) {
+    if (arguments.length === 0) {
+        return this._endTime;
+    }
+    this._endTime = value;
+    return this;
 };
 
 /**
@@ -1208,8 +1324,55 @@ Timer.prototype.startTime = function () {
  *
  * @return {Number}
  */
-Timer.prototype.interval = function () {
-    return this._interval;
+Timer.prototype.interval = function (value) {
+    if (arguments.length === 0) {
+        return this._interval;
+    }
+    if (value <= 0) {
+        this._interval = undefined;
+    } else {
+        this._interval = value;
+    }
+    return this;
+};
+
+/**
+ * Increments the start time by a given number of milliseconds.
+ *
+ * @param {Number}
+ */
+Timer.prototype.delay = function (value) {
+    if (value <= 0) {
+        return;
+    }
+    this._startTime += value;
+    return this;
+};
+
+/**
+ * Sets the number of times the timer should execute.
+ *
+ * @param {Number}
+ */
+Timer.prototype.times = function (value) {
+    this.endTime(this.startTime() + (this.interval() * (Math.max(1, value))));
+    return this;
+};
+
+/**
+ * Sets end time based on the start time and given duration.
+ *
+ * @param {Number}
+ */
+Timer.prototype.duration = function (value) {
+    if (arguments.length === 0) {
+        if (this._endTime === undefined) {
+            return undefined;
+        }
+        return this._endTime - this._startTime;
+    }
+    this.endTime(this.startTime() + value);
+    return this;
 };
 
 /**
@@ -1244,24 +1407,34 @@ Timer.prototype.run = function () {
  * @return {Number}
  */
 Timer.prototype.until = function (t) {
-    if (!this.running()) {
+    var offset,
+        startTime = this.startTime(),
+        endTime   = this.endTime(),
+        interval  = this.interval();
+
+    if (!this.running() || startTime === undefined || interval === undefined) {
         return null;
     }
 
     // If we haven't reached the start time then the next execution
     // is the start time.
-    if (this._startTime > t) {
-        return this._startTime;
+    if (startTime > t) {
+        return startTime;
+    }
+
+    // If we're past the end time then return null.
+    if (endTime !== undefined && t > endTime) {
+        return null;
     }
 
     // If t is on an interval then return it.
-    var offset = t - this._startTime;
-    if (offset % this._interval === 0) {
+    offset = t - startTime;
+    if (offset % interval === 0) {
         return t;
     }
 
     // Otherwise find the next interval that occurs immediately after t.
-    return this._startTime + ((Math.floor(offset / this._interval) + 1) * this._interval);
+    return startTime + ((Math.floor(offset / interval) + 1) * interval);
 };
 
 module.exports = Timer;
