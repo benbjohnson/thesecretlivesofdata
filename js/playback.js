@@ -658,6 +658,7 @@ function Frame(fn) {
         throw "Frame function required";
     }
     this._fn = fn;
+    this._player = null;
     this._onend = null;
     this._playhead = 0;
     this._duration = 0;
@@ -688,6 +689,19 @@ Frame.prototype.end = function () {
     if (is.fn(this._onend)) {
         this._onend.call(this, this);
     }
+    return this;
+};
+
+/**
+ * Sets or retrieves the player this frame belongs to.
+ *
+ * @return {Frame|Player}
+ */
+Frame.prototype.player = function (value) {
+    if (arguments.length === 0) {
+        return this._player;
+    }
+    this._player = value;
     return this;
 };
 
@@ -852,6 +866,16 @@ Frame.prototype.model = function (value) {
     }
     this._model = value;
     return this;
+};
+
+/**
+ * Retrieves the layout used by the player.
+ *
+ * @return {Layout}
+ */
+Frame.prototype.layout = function (value) {
+    var player = this.player();
+    return (player !== null ? player.layout() : null);
 };
 
 /**
@@ -1101,6 +1125,7 @@ Player.prototype.frame = function (value) {
 
     if (is.fn(value)) {
         frame = new Frame(value);
+        frame.player(this);
         this._frames.push(frame);
         this.currentIndex(0, true);
         return this;

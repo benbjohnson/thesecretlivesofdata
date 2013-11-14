@@ -34,7 +34,7 @@ define([], function () {
      */
     Layout.prototype.nodes = function () {
         var model = this.model();
-        return (model !== null ? model.nodes() : [])
+        return (model !== null ? model.nodes() : []);
     };
 
     /**
@@ -77,7 +77,7 @@ define([], function () {
                     .attr("cy", function (d) { return self.scales.y(HEIGHT / 2); })
                     .style("fill", "steelblue");
 
-                this.transition()
+                this.transition().duration(500)
                     .attr("r", function (d) { return d.radius; })
                     .attr("cx", function (d) { return self.scales.x(d.x); })
                     .attr("cy", function (d) { return self.scales.y(d.y); });
