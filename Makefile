@@ -7,7 +7,7 @@ test: lint
 	$(PHANTOM) test/index.html
 
 lint:
-	$(LINT) js/raft/*.js
+	$(LINT) raft/js/{,**/}*.js
 
 clean:
 

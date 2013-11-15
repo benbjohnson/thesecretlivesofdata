@@ -9,18 +9,17 @@ define(["./model", "./layout", "./frames/init", "../../js/domReady!"], function 
     player.model(new Model());
     frames(player);
 
-    $(doc).on("click", ".prev-frame", function() {
+    $(doc).on("click", ".prev-frame", function () {
         player.prev();
     });
-    $(doc).on("click", ".next-frame", function() {
+    $(doc).on("click", ".next-frame", function () {
         player.next();
     });
-    $(doc).on("click", "#helpButton", function() {
-        debugger;
+    $(doc).on("click", "#helpButton", function () {
     });
 
     // Update frame index display on change.
-    player.onframechange(function() {
+    player.onframechange(function () {
         $("#currentIndex").text(player.currentIndex() + 1);
     });
 });

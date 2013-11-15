@@ -1,7 +1,7 @@
 
 "use strict";
 /*jslint browser: true, nomen: true*/
-/*global define, d3*/
+/*global define, playback*/
 
 define(["./node"], function (Node) {
     function Model() {
@@ -56,7 +56,7 @@ define(["./node"], function (Node) {
      */
     Model.prototype.clone = function () {
         var i, clone = new Model();
-        clone._nodes = this._nodes.map(function(item) { return item.clone(); });
+        clone._nodes = this._nodes.map(function (item) { return item.clone(); });
         return clone;
     };
 

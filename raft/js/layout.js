@@ -80,7 +80,7 @@ define([], function () {
             show: false,
         });
 
-        if (title != "" || comment != "") {
+        if (title !== "" || comment !== "") {
             $("#modal").show();
             $("#controlbar").hide();
         } else {
@@ -98,7 +98,7 @@ define([], function () {
 
         this.updateNodeLayout();
 
-        this.g.selectAll(".node").data(nodes, function(d) { return d.id; })
+        this.g.selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")
@@ -125,7 +125,7 @@ define([], function () {
 
         this.updateNodeLayout();
 
-        this.g.selectAll(".node").data(nodes, function(d) { return d.id; })
+        this.g.selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")

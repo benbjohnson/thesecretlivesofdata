@@ -9,5 +9,4 @@ define(["./intro", "./one_node"],
             player.frame(intro);
             player.frame(one_node);
         };
-    }
-);
+    });
