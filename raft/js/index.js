@@ -8,20 +8,15 @@ define(["./model", "./layout", "./frames/init", "../../js/domReady!"], function 
     player.layout(new Layout("#chart"));
     player.model(new Model());
     frames(player);
-    // player.rate(1);
 
-    $(doc).on("click", "#prevButton", function() {
+    $(doc).on("click", ".prev-frame", function() {
         player.prev();
     });
-    $(doc).on("click", "#nextButton", function() {
+    $(doc).on("click", ".next-frame", function() {
         player.next();
     });
     $(doc).on("click", "#helpButton", function() {
-        // debugger;
-        $("#modal").modal({
-            keyboard: false,
-            backdrop: false,
-        });
+        debugger;
     });
 
     // Update frame index display on change.

@@ -12,6 +12,8 @@ define(["../node", ], function (Node) {
         frame.timer(function() {
             model.addNode(new Node(index++));
             layout.invalidateNodes();
-        }).interval(1000).times(3).run();
+        }).interval(750).times(2).run().run();
+
+        frame.player().rate(1);
     };
 });

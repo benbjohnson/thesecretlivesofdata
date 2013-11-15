@@ -1183,14 +1183,14 @@ Player.prototype.frames = function () {
  */
 Player.prototype.current = function (value) {
     if (arguments.length === 0) {
-        if (this._currentIndex === -1 || this._frames.length === 0) {
+        if (this.currentIndex() === -1 || this.frames().length === 0) {
             return null;
         }
-        return this._frames[this._currentIndex];
+        return this.frames()[this._currentIndex];
     }
 
     // Find the index of the frame and set it.
-    var index = this._frames.indexOf(value);
+    var index = this.frames().indexOf(value);
     if (index !== -1) {
         this.currentIndex(index);
     }
@@ -1219,6 +1219,11 @@ Player.prototype.currentIndex = function (value) {
         model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
         if (model !== null) {
             model = model.clone();
+        }
+
+        // End previous frame.
+        if (this.current() !== null) {
+            this.current().end();
         }
 
         this._currentIndex = value;
@@ -1488,6 +1493,7 @@ Timer.prototype.stop = function () {
  */
 Timer.prototype.run = function () {
     this._fn.call(this, this);
+    return this;
 };
 
 /**

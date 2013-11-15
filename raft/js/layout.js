@@ -26,6 +26,7 @@ define([], function () {
             x: d3.scale.linear(),
             y: d3.scale.linear(),
         };
+        this.modal = null;
         this.invalidateSize();
     };
 
@@ -41,6 +42,7 @@ define([], function () {
      * Redraws the entire model.
      */
     Layout.prototype.invalidate = function () {
+        this.invalidateModal();
         this.invalidateNodes();
     };
 
@@ -56,7 +58,35 @@ define([], function () {
         this.scales.x.domain([0, WIDTH]).range([0, w]);
         this.scales.y.domain([0, HEIGHT]).range([0, h]);
 
-        this.invalidate();
+        if (this.model()) {
+            this.invalidate();
+        }
+    };
+
+    /**
+     * Shows or hides the modal depending on the title and comment.
+     */
+    Layout.prototype.invalidateModal = function () {
+        var model   = this.model(),
+            title   = model.title,
+            comment = model.comment;
+
+        $("#modal h2").html(title);
+        $("#modal p").html(comment);
+
+        $("#modal").modal({
+            keyboard: false,
+            backdrop: false,
+            show: false,
+        });
+
+        if (title != "" || comment != "") {
+            $("#modal").show();
+            $("#controlbar").hide();
+        } else {
+            $("#modal").hide();
+            $("#controlbar").show();
+        }
     };
 
     /**

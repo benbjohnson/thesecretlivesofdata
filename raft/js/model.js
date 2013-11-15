@@ -5,6 +5,9 @@
 
 define(["./node"], function (Node) {
     function Model() {
+        this.title = "";
+        this.comment = "";
+
         this._nodes = [];
     }
 

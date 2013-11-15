@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 	<title>Raft</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<link href="../css/bootstrap.min.css" rel="stylesheet">
 	<link href="../css/main.css" rel="stylesheet">
 	<script src="../js/jquery-2.0.3.min.js"></script>
@@ -13,23 +14,14 @@
 
 <body>
 	<header id="header">
-		<div class="container">
-			<h1>
-				Raft
-				<span id="helpButton" class="glyphicon glyphicon-question-sign" style="font-size:20pt; cursor:pointer; color:#999"></span>
-			</h1>
-			<div>
-				<button type="button" id="prevButton" class="btn btn-default">
-					<span class="glyphicon glyphicon-chevron-left"></span>
-				</button>
-				<button type="button" id="nextButton" class="btn btn-default">
-					<span class="glyphicon glyphicon-chevron-right"></span>
-				</button>
-			</div>
-			<div>
-				Frame: #<span id="currentIndex">1</span>
-			</div>
-		</div>
+		<nav class="navbar navbar-default" role="navigation">
+			<a class="navbar-brand" href="#">Raft</a>
+
+			<ul id="controlbar" class="nav navbar-nav pull-right">
+				<li class="prev-frame"><a href="#"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
+				<li class="next-frame"><a href="#"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
+			</ul>
+		</nav>
 	</header>
 
 	<main id="content" role="main">
@@ -41,14 +33,11 @@
 	  <div class="modal-dialog">
 	    <div class="modal-content">
 	      <div class="modal-body">
-	        <h1>Header</h1>
-	        <p>
-	        	lorem ipsum
-	        </p>
+	        <h2></h2>
+	        <p></p>
 	      </div>
 	      <div class="modal-footer">
-	        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-	        <button type="button" class="btn btn-primary">Save changes</button>
+	        <button type="button" class="btn btn-primary next-frame">Next</button>
 	      </div>
 	    </div><!-- /.modal-content -->
 	  </div><!-- /.modal-dialog -->
