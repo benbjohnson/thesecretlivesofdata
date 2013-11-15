@@ -8,5 +8,24 @@ define(["./model", "./layout", "./frames/init", "../domReady!"], function (Model
     player.layout(new Layout("#chart"));
     player.model(new Model());
     frames(player);
-    player.rate(1);
+    // player.rate(1);
+
+    $(doc).on("click", "#prevButton", function() {
+        player.prev();
+    });
+    $(doc).on("click", "#nextButton", function() {
+        player.next();
+    });
+    $(doc).on("click", "#helpButton", function() {
+        // debugger;
+        $("#modal").modal({
+            keyboard: false,
+            backdrop: false,
+        });
+    });
+
+    // Update frame index display on change.
+    player.onframechange(function() {
+        $("#currentIndex").text(player.currentIndex() + 1);
+    });
 });

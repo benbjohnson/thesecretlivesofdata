@@ -12,5 +12,14 @@ define([], function () {
         this.entries = [];
     }
 
+    /**
+     * Clones the node.
+     */
+    Node.prototype.clone = function () {
+        var i, clone = new Node();
+        clone.id = this.id;
+        return clone;
+    };
+
     return Node;
 });

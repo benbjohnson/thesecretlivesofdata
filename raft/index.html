@@ -13,7 +13,21 @@
 <body>
 	<header id="header">
 		<div class="container">
-			<h1>Raft</h1>
+			<h1>
+				Raft
+				<span id="helpButton" class="glyphicon glyphicon-question-sign" style="font-size:20pt; cursor:pointer; color:#999"></span>
+			</h1>
+			<div>
+				<button type="button" id="prevButton" class="btn btn-default">
+					<span class="glyphicon glyphicon-chevron-left"></span>
+				</button>
+				<button type="button" id="nextButton" class="btn btn-default">
+					<span class="glyphicon glyphicon-chevron-right"></span>
+				</button>
+			</div>
+			<div>
+				Frame: #<span id="currentIndex">1</span>
+			</div>
 		</div>
 	</header>
 
@@ -21,5 +35,23 @@
 		<div id="chart" class="container">
 		</div>
 	</main>
+
+	<div class="modal" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h4 class="modal-title" id="modal-label">Modal title</h4>
+	      </div>
+	      <div class="modal-body">
+	        ...
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	        <button type="button" class="btn btn-primary">Save changes</button>
+	      </div>
+	    </div><!-- /.modal-content -->
+	  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
 </body>
 </html>

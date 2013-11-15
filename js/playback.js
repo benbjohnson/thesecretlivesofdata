@@ -992,13 +992,35 @@ Layout.prototype.model = function () {
 module.exports = Layout;
 
 });
+require.register("playback/lib/model.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+/**
+ * Initializes a new Model instance.
+ */
+function Model() {
+}
+
+/**
+ * Clones the current state of the model.
+ */
+Model.prototype.clone = function () {
+    return this;
+};
+
+module.exports = Model;
+
+});
 require.register("playback/lib/playback.js", function(exports, require, module){
 
 "use strict";
 /*jslint browser: true, nomen: true*/
 
 var Player = require('./player'),
-    Layout = require('./layout');
+    Layout = require('./layout'),
+    Model = require('./model');
 
 /**
  * Initializes a new Playback instance.
@@ -1018,6 +1040,13 @@ Playback.prototype.player = function () {
  */
 Playback.prototype.layout = function () {
     return new Layout();
+};
+
+/**
+ * Retrieves the model superclass.
+ */
+Playback.prototype.model = function () {
+    return new Model();
 };
 
 module.exports = Playback;
@@ -1041,12 +1070,14 @@ var Frame    = require('./frame'),
  */
 function Player() {
     this._rate = 0;
-    this._currentIndex = 0;
+    this._currentIndex = -1;
     this._frames = [];
     this._prevtick = null;
     this._ticker = null;
     this._model = null;
     this._layout = null;
+    this._onupdate = null;
+    this._onframechange = null;
 }
 
 /**
@@ -1127,7 +1158,9 @@ Player.prototype.frame = function (value) {
         frame = new Frame(value);
         frame.player(this);
         this._frames.push(frame);
-        this.currentIndex(0, true);
+        if (this.current() === null) {
+            this.currentIndex(0);
+        }
         return this;
     }
 
@@ -1150,7 +1183,7 @@ Player.prototype.frames = function () {
  */
 Player.prototype.current = function (value) {
     if (arguments.length === 0) {
-        if (this._frames.length === 0) {
+        if (this._currentIndex === -1 || this._frames.length === 0) {
             return null;
         }
         return this._frames[this._currentIndex];
@@ -1169,20 +1202,31 @@ Player.prototype.current = function (value) {
  *
  * @return {Player|Number}
  */
-Player.prototype.currentIndex = function (value, force) {
-    var frame;
+Player.prototype.currentIndex = function (value) {
+    var frame, model;
 
     if (arguments.length === 0) {
         return this._currentIndex;
     }
 
+    // Don't allow initialization if we don't have a model.
+    if (this._currentIndex === -1 && this.model() === null) {
+        return this;
+    }
+
     // Move to new frame and initialize it.
-    if (value >= 0 && value < this._frames.length) {
-        if (value !== this._currentIndex || force) {
-            this._currentIndex = value;
-            frame = this._frames[value];
-            frame.model(this.model());
-            frame.init();
+    if (value >= 0 && value < this._frames.length && value !== this._currentIndex) {
+        model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
+        if (model !== null) {
+            model = model.clone();
+        }
+
+        this._currentIndex = value;
+        frame = this._frames[value];
+        frame.model(model);
+        frame.init();
+        if (this.onframechange() !== null) {
+            this.onframechange().call(this);
         }
     }
     return this;
@@ -1218,6 +1262,12 @@ Player.prototype.model = function (value) {
         return this._model;
     }
     this._model = value;
+
+    // Initialize first frame now that we have a model.
+    if (this.current() === null) {
+        this.currentIndex(0);
+    }
+
     return this;
 };
 
@@ -1281,6 +1331,20 @@ Player.prototype.onupdate = function (fn) {
         return this._onupdate;
     }
     this._onupdate = fn;
+    return this;
+};
+
+/**
+ * Sets or retrieves the callback function that executes whenever the
+ * current frame index is changed.
+ *
+ * @return {Function|Player}
+ */
+Player.prototype.onframechange = function (fn) {
+    if (arguments.length === 0) {
+        return this._onframechange;
+    }
+    this._onframechange = fn;
     return this;
 };
 

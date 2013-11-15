@@ -8,6 +8,8 @@ define(["./node"], function (Node) {
         this._nodes = [];
     }
 
+    Model.prototype = playback.model();
+
     /**
      * Retrieves a node by id.
      */
@@ -43,6 +45,16 @@ define(["./node"], function (Node) {
         if (index !== -1) {
             this._nodes.splice(index, 1);
         }
+    };
+
+
+    /**
+     * Clones the model.
+     */
+    Model.prototype.clone = function () {
+        var i, clone = new Model();
+        clone._nodes = this._nodes.map(function(item) { return item.clone(); });
+        return clone;
     };
 
     return Model;

@@ -60,7 +60,7 @@ define([], function () {
     };
 
     /**
-     * Repositions and redraws the nodes.
+     * Repositions and redraws overlay text.
      */
     Layout.prototype.invalidateNodes = function () {
         var self = this,
@@ -68,7 +68,7 @@ define([], function () {
 
         this.updateNodeLayout();
 
-        this.g.selectAll(".node").data(nodes)
+        this.g.selectAll(".node").data(nodes, function(d) { return d.id; })
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")
@@ -81,6 +81,35 @@ define([], function () {
                     .attr("r", function (d) { return d.radius; })
                     .attr("cx", function (d) { return self.scales.x(d.x); })
                     .attr("cy", function (d) { return self.scales.y(d.y); });
+
+                this.exit().remove();
+            });
+    };
+
+    /**
+     * Repositions and redraws the nodes.
+     */
+    Layout.prototype.invalidateNodes = function () {
+        var self = this,
+            nodes = this.nodes();
+
+        this.updateNodeLayout();
+
+        this.g.selectAll(".node").data(nodes, function(d) { return d.id; })
+            .call(function () {
+                this.enter().append("circle")
+                    .attr("class", "node")
+                    .attr("r", function (d) { return d.radius; })
+                    .attr("cx", function (d) { return self.scales.x(WIDTH / 2); })
+                    .attr("cy", function (d) { return self.scales.y(HEIGHT / 2); })
+                    .style("fill", "steelblue");
+
+                this.transition().duration(500)
+                    .attr("r", function (d) { return d.radius; })
+                    .attr("cx", function (d) { return self.scales.x(d.x); })
+                    .attr("cy", function (d) { return self.scales.y(d.y); });
+
+                this.exit().remove();
             });
     };
 
