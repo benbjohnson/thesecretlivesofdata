@@ -89,7 +89,8 @@ define([], function () {
             h     = [],
             y     = DIALOG.margin.top,
             dialogWidth = 0,
-            dialogHeight = 0;
+            dialogHeight = 0,
+            stroked = (model.h1.length > 0);
 
         // Calculate line positions.
         [model.h1, model.h2, model.h3, model.h4, model.h5].map(function (_, i) {
@@ -117,29 +118,29 @@ define([], function () {
                     .attr("class", "dialog")
                     .attr("transform", transform)
                     .call(function () {
-                        this.append("rect");
+                        this.append("rect")
+                            .attr("fill", "none");
                     });
-                this.transition()
+                this.transition().duration(1000)
                     .attr("transform", transform);
                 this.select("rect")
-                    .attr("width", dialogWidth)
-                    .attr("height", dialogHeight)
-                    .attr("stroke", "black")
-                    .attr("fill", "none");
+                    .transition().duration(1000)
+                        .attr("width", dialogWidth)
+                        .attr("height", dialogHeight);
             });
 
 
         // Render dialog text lines.
-        this.dialog.selectAll("text.h").data(h)
+        this.dialog.selectAll("text.h").data(h, function (d) { return d.id; })
             .call(function () {
                 this.enter().append("text")
                     .attr("class", function (d) { return "h " + d.className; })
                     .attr("text-anchor", "middle")
-                    .attr("dy", "1em")
-                    .text(function (d) { return d.text; });
-                this.transition()
+                    .attr("dy", "1em");
+                this.transition().duration(1000)
                     .attr("x", dialogWidth / 2)
-                    .attr("y", function (d) { return d.y; });
+                    .attr("y", function (d) { return d.y; })
+                    .text(function (d) { return d.text; });
                 this.exit().remove();
             });
     };
