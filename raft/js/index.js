@@ -7,6 +7,7 @@ define(["./model", "./layout", "./frames/init", "../../js/domReady!"], function 
     var player = playback.player();
     player.layout(new Layout("#chart"));
     player.model(new Model());
+    player.resizeable(true);
     frames(player);
 
     $(doc).on("click", ".prev-frame", function () {

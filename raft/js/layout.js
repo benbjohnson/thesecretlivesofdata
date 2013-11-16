@@ -7,7 +7,15 @@ define([], function () {
     var ANGLE = {3: 30, 5: 50},
         WIDTH = 100,
         HEIGHT = 100,
-        NODE_RADIUS = 30;
+        NODE_RADIUS = 30,
+        DIALOG = {margin: {top: 20, bottom: 20, left: 30, right: 30}},
+        H = [
+            {height: 36, charWidth: 16.5, margin: {top:20, bottom:10}},
+            {height: 30, charWidth: 14.8, margin: {top:20, bottom:10}},
+            {height: 24, margin: {top:20, bottom:10}},
+            {height: 18, margin: {top:10, bottom:10}},
+            {height: 14, margin: {top:10, bottom:10}},
+        ];
 
     function Layout(selector) {
         this.selector = selector;
@@ -21,7 +29,11 @@ define([], function () {
     Layout.prototype.initialize = function () {
         this.container = $(this.selector);
         this.svg = d3.select(this.selector).append("svg");
-        this.g = this.svg.append("g");
+        this.g = {
+            messages: this.svg.append("g"),
+            nodes:    this.svg.append("g"),
+            copy:     this.svg.append("g"),
+        };
         this.scales = {
             x: d3.scale.linear(),
             y: d3.scale.linear(),
@@ -42,7 +54,7 @@ define([], function () {
      * Redraws the entire model.
      */
     Layout.prototype.invalidate = function () {
-        this.invalidateModal();
+        this.invalidateCopy();
         this.invalidateNodes();
     };
 
@@ -50,13 +62,18 @@ define([], function () {
      * Adjusts the size of the layout and adjusts the scales.
      */
     Layout.prototype.invalidateSize = function () {
-        var w = $("#chart").width(),
-            h = 500;
+        var top = 70, bottom = 20,
+            width = $("#chart").width(),
+            height = $(window).height() - top - bottom,
+            transform = "translate(0, 0)";
 
-        this.svg.attr("width", w).attr("height", h);
+        this.svg.attr("width", width).attr("height", height);
+        this.g.messages.attr("transform", transform);
+        this.g.nodes.attr("transform", transform);
+        this.g.copy.attr("transform", transform);
 
-        this.scales.x.domain([0, WIDTH]).range([0, w]);
-        this.scales.y.domain([0, HEIGHT]).range([0, h]);
+        this.scales.x.domain([0, WIDTH]).range([0, width]);
+        this.scales.y.domain([0, HEIGHT]).range([0, height]);
 
         if (this.model()) {
             this.invalidate();
@@ -64,29 +81,67 @@ define([], function () {
     };
 
     /**
-     * Shows or hides the modal depending on the title and comment.
+     * Shows or hides the modal depending on the copy.
      */
-    Layout.prototype.invalidateModal = function () {
-        var model   = this.model(),
-            title   = model.title,
-            comment = model.comment;
+    Layout.prototype.invalidateCopy = function () {
+        var self  = this,
+            model = this.model(),
+            h     = [],
+            y     = DIALOG.margin.top,
+            dialogWidth = 0,
+            dialogHeight = 0;
 
-        $("#modal h2").html(title);
-        $("#modal p").html(comment);
-
-        $("#modal").modal({
-            keyboard: false,
-            backdrop: false,
-            show: false,
+        // Calculate line positions.
+        [model.h1, model.h2, model.h3, model.h4, model.h5].map(function (_, i) {
+            _.map(function (d, j) {
+                var prevMargin = (h.length > 0 ? h[h.length-1].H.margin.bottom : y);
+                y += Math.max(0, H[i].margin.top - prevMargin);
+                h.push({
+                    id: (i * H.length) + j,
+                    className: "h" + (i + 1),
+                    text: d,
+                    H: H[i],
+                    y: y,
+                });
+                y += H[i].height + H[i].margin.bottom;
+                dialogWidth = Math.max(dialogWidth, DIALOG.margin.left + DIALOG.margin.right + (H[i].charWidth * d.length));
+            });
         });
+        dialogHeight = y + DIALOG.margin.bottom;
 
-        if (title !== "" || comment !== "") {
-            $("#modal").show();
-            $("#controlbar").hide();
-        } else {
-            $("#modal").hide();
-            $("#controlbar").show();
-        }
+        // Render dialog style.
+        this.dialog = this.g.copy.selectAll("g.dialog").data([{}])
+            .call(function () {
+                var transform = "translate(" + (self.scales.x(WIDTH / 2) - (dialogWidth / 2)) + "," + (self.scales.y((HEIGHT * 0.8) / 2) - (dialogHeight / 2)) + ")";
+                this.enter().append("g")
+                    .attr("class", "dialog")
+                    .attr("transform", transform)
+                    .call(function () {
+                        this.append("rect");
+                    });
+                this.transition()
+                    .attr("transform", transform);
+                this.select("rect")
+                    .attr("width", dialogWidth)
+                    .attr("height", dialogHeight)
+                    .attr("stroke", "black")
+                    .attr("fill", "none");
+            });
+
+
+        // Render dialog text lines.
+        this.dialog.selectAll("text.h").data(h)
+            .call(function () {
+                this.enter().append("text")
+                    .attr("class", function (d) { return "h " + d.className; })
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "1em")
+                    .text(function (d) { return d.text; });
+                this.transition()
+                    .attr("x", dialogWidth / 2)
+                    .attr("y", function (d) { return d.y; });
+                this.exit().remove();
+            });
     };
 
     /**
@@ -98,7 +153,7 @@ define([], function () {
 
         this.updateNodeLayout();
 
-        this.g.selectAll(".node").data(nodes, function (d) { return d.id; })
+        this.g.nodes.selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")
@@ -125,7 +180,7 @@ define([], function () {
 
         this.updateNodeLayout();
 
-        this.g.selectAll(".node").data(nodes, function (d) { return d.id; })
+        this.g.nodes.selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")

@@ -950,6 +950,20 @@ Layout.prototype.initialize = function () {
 };
 
 /**
+ * Redraws the layout.
+ */
+Layout.prototype.invalidate = function () {
+    // Implemented by subclass.
+};
+
+/**
+ * Updates the layout to the new window size.
+ */
+Layout.prototype.invalidateSize = function () {
+    // Implemented by subclass.
+};
+
+/**
  * Sets or retrieves the player associated with the layout.
  *
  * @return {Player|Layout}
@@ -1078,6 +1092,10 @@ function Player() {
     this._layout = null;
     this._onupdate = null;
     this._onframechange = null;
+
+    this._resizeable = false;
+    this._resizeableInitialized = false;
+    this._sysresizehandler = null;
 }
 
 /**
@@ -1297,6 +1315,44 @@ Player.prototype.layout = function (value) {
     }
 
     return this;
+};
+
+/**
+ * Sets up handlers that invoke layout invalidation on window resize.
+ */
+Player.prototype.resizeable = function (value) {
+    var self = this;
+
+    if (arguments.length === 0) {
+        return this._resizeable;
+    }
+
+    // Set up a handler that we can swap our internal handler out of.
+    if (value && !this._resizeableInitialized) {
+        this._resizeableInitialized = true;
+        this._sysresizehandler = window.onresize;
+        window.onresize = function () {
+            if (is.fn(self._sysresizehandler)) {
+                self._sysresizehandler.apply(null, arguments);
+            }
+            if (self._resizeable) {
+                self.resize();
+            }
+        };
+    }
+
+    this._resizeable = value;
+
+    return this;
+};
+
+/**
+ * Invalidates the size of the layout.
+ */
+Player.prototype.resize = function () {
+    if (this.layout() !== null) {
+        this.layout().invalidateSize();
+    }
 };
 
 /**
