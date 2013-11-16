@@ -84,16 +84,18 @@ define([], function () {
      * Shows or hides the modal depending on the copy.
      */
     Layout.prototype.invalidateCopy = function () {
-        var self  = this,
-            model = this.model(),
-            h     = [],
-            y     = DIALOG.margin.top,
+        var self   = this,
+            model  = this.model(),
+            h      = [],
+            y      = DIALOG.margin.top,
+            align  = model.dialog.align,
+            valign = model.dialog.valign,
             dialogWidth = 0,
             dialogHeight = 0,
-            stroked = (model.h1.length > 0);
+            stroked = (model.dialog.h1.length > 0);
 
         // Calculate line positions.
-        [model.h1, model.h2, model.h3, model.h4, model.h5].map(function (_, i) {
+        model.dialog.h().map(function (_, i) {
             _.map(function (d, j) {
                 var prevMargin = (h.length > 0 ? h[h.length-1].H.margin.bottom : y);
                 y += Math.max(0, H[i].margin.top - prevMargin);
@@ -113,7 +115,24 @@ define([], function () {
         // Render dialog style.
         this.dialog = this.g.copy.selectAll("g.dialog").data([{}])
             .call(function () {
-                var transform = "translate(" + (self.scales.x(WIDTH / 2) - (dialogWidth / 2)) + "," + (self.scales.y((HEIGHT * 0.8) / 2) - (dialogHeight / 2)) + ")";
+                var x, y;
+                if (align === "left") {
+                    x = self.scales.x(10);
+                } else if (align === "right") {
+                    x = self.scales.x(90) - dialogWidth;
+                } else {
+                    x = (self.scales.x(WIDTH / 2) - (dialogWidth / 2));
+                }
+
+                if (valign === "top") {
+                    y = self.scales.y(10);
+                } else if (valign === "right") {
+                    y = self.scales.y(90) - dialogHeight;
+                } else {
+                    y = (self.scales.y((HEIGHT * 0.8) / 2) - (dialogHeight / 2));
+                }
+
+                var transform = "translate(" + x + "," + y + ")";
                 this.enter().append("g")
                     .attr("class", "dialog")
                     .attr("transform", transform)

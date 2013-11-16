@@ -3,9 +3,9 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback*/
 
-define(["./node"], function (Node) {
+define(["./dialog", "./node"], function (Dialog, Node) {
     function Model() {
-        this.h1 = this.h2 = this.h3 = this.h4 = this.h5 = [];
+        this.dialog = new Dialog();
         this._nodes = [];
     }
 
@@ -32,6 +32,13 @@ define(["./node"], function (Node) {
     };
 
     /**
+     * Creates a new node.
+     */
+    Model.prototype.newNode = function (id) {
+        return new Node(id);
+    };
+
+    /**
      * Adds a node to the model.
      */
     Model.prototype.addNode = function (node) {
@@ -54,6 +61,7 @@ define(["./node"], function (Node) {
      */
     Model.prototype.clone = function () {
         var i, clone = new Model();
+        clone.dialog = this.dialog.clone();
         clone._nodes = this._nodes.map(function (item) { return item.clone(); });
         return clone;
     };
