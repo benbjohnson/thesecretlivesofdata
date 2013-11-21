@@ -13,7 +13,7 @@ define([], function () {
         dialog.h2 = ["Understandable Distributed Consensus"];
         layout.invalidate();
 
-        frame.onend(function () {
+        frame.addEventListener("end", function () {
             dialog.h1 = dialog.h2 = [];
         });
     };

@@ -20,7 +20,7 @@ define(["./model/model", "./layout", "./frames/init", "../../js/domReady!"], fun
     });
 
     // Update frame index display on change.
-    player.onframechange(function () {
+    player.addEventListener("framechange", function () {
         $("#currentIndex").text(player.currentIndex() + 1);
     });
 });

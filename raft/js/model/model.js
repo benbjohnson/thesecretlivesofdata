@@ -3,58 +3,25 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback*/
 
-define(["./dialog", "./node"], function (Dialog, Node) {
+define(["./dialog", "./client", "./message", "./node"], function (Dialog, Client, Message, Node) {
     function Model() {
         this.dialog = new Dialog();
-        this._nodes = [];
+        this.nodes = playback.set(Node);
+        this.clients = playback.set(Client);
+        this.messages = playback.set(Message);
     }
 
     Model.prototype = playback.model();
 
     /**
-     * Retrieves a node by id.
+     * Performs clean up of the model at time t.
      */
-    Model.prototype.node = function (id) {
-        var i;
-        for (i = 0; i < this._nodes.length; i += 1) {
-            if (this._nodes[i].id === id) {
-                return this._nodes[i];
-            }
-        }
-        return null;
+    Model.prototype.tick = function (t) {
+        // Remove messages that have already been received.
+        this.messages.filter(function(message) {
+            return (message.recvTime < t);
+        });
     };
-
-    /**
-     * Retrieves a list of all nodes.
-     */
-    Model.prototype.nodes = function () {
-        return this._nodes;
-    };
-
-    /**
-     * Creates a new node.
-     */
-    Model.prototype.newNode = function (id) {
-        return new Node(id);
-    };
-
-    /**
-     * Adds a node to the model.
-     */
-    Model.prototype.addNode = function (node) {
-        this._nodes.push(node);
-    };
-
-    /**
-     * Removes a node from the model.
-     */
-    Model.prototype.removeNode = function (node) {
-        var index = this._nodes.indexOf(node);
-        if (index !== -1) {
-            this._nodes.splice(index, 1);
-        }
-    };
-
 
     /**
      * Clones the model.
@@ -62,7 +29,9 @@ define(["./dialog", "./node"], function (Dialog, Node) {
     Model.prototype.clone = function () {
         var i, clone = new Model();
         clone.dialog = this.dialog.clone();
-        clone._nodes = this._nodes.map(function (item) { return item.clone(); });
+        clone.nodes = this.nodes.clone();
+        clone.clients = this.clients.clone();
+        clone.messages = this.messages.clone();
         return clone;
     };
 

@@ -641,31 +641,119 @@ var Playback = require('./playback');
 module.exports = new Playback();
 
 });
+require.register("playback/lib/event.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+function Event(type) {
+    this.type = type;
+    this.target = null;
+}
+
+module.exports = Event;
+
+});
+require.register("playback/lib/event_dispatcher.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+/**
+ * EventDispatcher is a subclass for any objects that want to dispatch
+ * events through the standard addEventListener()/removeEventListener()
+ * interface.
+ */
+function EventDispatcher() {
+    this._eventListeners = {};
+}
+
+/**
+ * Adds a new event listener for a given event type.
+ *
+ * @param {String}
+ * @param {Function}
+ * @return {EventDispatcher}
+ */
+EventDispatcher.prototype.addEventListener = function (type, listener) {
+    if (this._eventListeners[type] === undefined) {
+        this._eventListeners[type] = [];
+    }
+    if (this._eventListeners[type].indexOf(listener) === -1) {
+        this._eventListeners[type].push(listener);
+    }
+    return this;
+};
+
+/**
+ * Removes an event listener for a given event type.
+ *
+ * @param {String}
+ * @param {Function}
+ * @return {EventDispatcher}
+ */
+EventDispatcher.prototype.removeEventListener = function (type, listener) {
+    var index;
+    if (this._eventListeners[type] !== undefined) {
+        index = this._eventListeners[type].indexOf(listener);
+        if (index !== -1) {
+            this._eventListeners[type].splice(index, 0);
+        }
+    }
+    return this;
+};
+
+/**
+ * Dispatches an event to all listeners of given event's type.
+ *
+ * @param {Event}
+ */
+EventDispatcher.prototype.dispatchEvent = function (event) {
+    var i, listeners = this._eventListeners[event.type];
+
+    event.target = this;
+
+    if (listeners !== undefined) {
+        for (i = 0; i < listeners.length; i += 1) {
+            listeners[i](event);
+        }
+    }
+};
+
+module.exports = EventDispatcher;
+
+});
 require.register("playback/lib/frame.js", function(exports, require, module){
 
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var Timer = require('./timer'),
-    Tween = require('./tween'),
-    is    = require('is');
+var EventDispatcher = require('./event_dispatcher'),
+    Event           = require('./event'),
+    Timer           = require('./timer'),
+    Tween           = require('./tween'),
+    is              = require('is');
 
 /**
  * Initializes a new Frame instance.
  */
 function Frame(fn) {
+    EventDispatcher.call(this);
+
     if (!is.fn(fn)) {
         throw "Frame function required";
     }
     this._fn = fn;
     this._player = null;
-    this._onend = null;
     this._playhead = 0;
     this._duration = 0;
     this._model = null;
     this._timers = [];
     this._tweens = [];
 }
+
+Frame.prototype = new EventDispatcher();
+Frame.prototype.constructor = Frame;
 
 /**
  * Initializes the frame by reseting the playhead to zero and executing
@@ -680,15 +768,13 @@ Frame.prototype.init = function () {
 };
 
 /**
- * Stops the frame and executes the "onend" handler.
+ * Stops the frame and executes an "end" event.
  *
  * @return {Frame}
  */
 Frame.prototype.end = function () {
     this.reset();
-    if (is.fn(this._onend)) {
-        this._onend.call(this, this);
-    }
+    this.dispatchEvent(new Event("end"));
     return this;
 };
 
@@ -776,7 +862,7 @@ Frame.prototype.duration = function () {
  * @param {Function}
  */
 Frame.prototype.timer = function (fn) {
-    var timer = new Timer(fn);
+    var timer = new Timer(this, fn);
     timer.startTime(this.playhead());
     this._timers.push(timer);
     return timer;
@@ -890,20 +976,6 @@ Frame.prototype.reset = function () {
     }
     this._timers = [];
 };
-
-/**
- * Sets or retrieves the onend handler.
- *
- * @return {Function|Frame}
- */
-Frame.prototype.onend = function (fn) {
-    if (arguments.length === 0) {
-        return this._onend;
-    }
-    this._onend = fn;
-    return this;
-};
-
 
 module.exports = Frame;
 
@@ -1034,7 +1106,8 @@ require.register("playback/lib/playback.js", function(exports, require, module){
 
 var Player = require('./player'),
     Layout = require('./layout'),
-    Model = require('./model');
+    Model  = require('./model'),
+    Set    = require('./set');
 
 /**
  * Initializes a new Playback instance.
@@ -1063,6 +1136,13 @@ Playback.prototype.model = function () {
     return new Model();
 };
 
+/**
+ * Retrieves a set instance.
+ */
+Playback.prototype.set = function (clazz) {
+    return new Set(clazz);
+};
+
 module.exports = Playback;
 
 Playback.VERSION = Playback.prototype.VERSION = '0.0.1';
@@ -1074,15 +1154,19 @@ require.register("playback/lib/player.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var Frame    = require('./frame'),
-    is       = require('is'),
-    nextTick = require('next-tick'),
-    periodic = require('periodic');
+var EventDispatcher = require('./event_dispatcher'),
+    Event           = require('./event'),
+    Frame           = require('./frame'),
+    is              = require('is'),
+    nextTick        = require('next-tick'),
+    periodic        = require('periodic');
 
 /**
  * Initializes a new Player instance.
  */
 function Player() {
+    EventDispatcher.call(this);
+
     this._rate = 0;
     this._currentIndex = -1;
     this._frames = [];
@@ -1090,13 +1174,14 @@ function Player() {
     this._ticker = null;
     this._model = null;
     this._layout = null;
-    this._onupdate = null;
-    this._onframechange = null;
 
     this._resizeable = false;
     this._resizeableInitialized = false;
     this._sysresizehandler = null;
 }
+
+Player.prototype = new EventDispatcher();
+Player.prototype.constructor = Player;
 
 /**
  * Sets or retrieves the playback rate of the player. This is the rate
@@ -1248,9 +1333,7 @@ Player.prototype.currentIndex = function (value) {
         frame = this._frames[value];
         frame.model(model);
         frame.init();
-        if (this.onframechange() !== null) {
-            this.onframechange().call(this);
-        }
+        this.dispatchEvent(new Event("framechange"));
     }
     return this;
 };
@@ -1356,19 +1439,6 @@ Player.prototype.resize = function () {
 };
 
 /**
- * Updates the player and issues the 'update' callback. This is called
- * whenever the playhead is changed.
- *
- * @return {Player}
- */
-Player.prototype.update = function () {
-    if (is.fn(this.onupdate())) {
-        this.onupdate().call(this, this);
-    }
-    return this;
-};
-
-/**
  * Updates the playhead of the current frame based on the elapsed time
  * and playback rate. The elapsed time argument is in player-time.
  */
@@ -1378,38 +1448,180 @@ Player.prototype.tick = function (elapsed) {
         return;
     }
     frame.playhead(frame.playhead() + elapsed);
-    this.update();
-};
-
-/**
- * Sets or retrieves the callback function that executes whenever the
- * playhead is updated.
- *
- * @return {Function|Player}
- */
-Player.prototype.onupdate = function (fn) {
-    if (arguments.length === 0) {
-        return this._onupdate;
-    }
-    this._onupdate = fn;
-    return this;
-};
-
-/**
- * Sets or retrieves the callback function that executes whenever the
- * current frame index is changed.
- *
- * @return {Function|Player}
- */
-Player.prototype.onframechange = function (fn) {
-    if (arguments.length === 0) {
-        return this._onframechange;
-    }
-    this._onframechange = fn;
-    return this;
+    this.dispatchEvent(new Event("tick"));
 };
 
 module.exports = Player;
+
+});
+require.register("playback/lib/set.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+var EventDispatcher = require('./event_dispatcher'),
+    Event           = require('./event'),
+    is              = require('is');
+
+/**
+ * A Set is a collection of unique objects where uniqueness is
+ * determined by the "id" property.
+ */
+function Set(clazz) {
+    EventDispatcher.call(this);
+    this.clazz(clazz);
+    this._elements = [];
+}
+
+Set.prototype = new EventDispatcher();
+Set.prototype.constructor = Set;
+
+
+/**
+ * Sets or retrieves the item class used for instantitation.
+ *
+ * @param {Function}
+ * @return {Set|Function}
+ */
+Set.prototype.clazz = function (value) {
+    if (arguments.length === 0) {
+        return this._clazz;
+    }
+    this._clazz = (is.fn(value) ? value : null);
+    return this;
+};
+
+/**
+ * Creates a new instance of the set's class and adds it to the set.
+ * The first parameter is passed to the class' constructor.
+ *
+ * @param {Number}
+ * @return {Object}
+ */
+Set.prototype.create = function (id) {
+    var element = this.find(id),
+        clazz = this.clazz();
+
+    if (clazz === null) {
+        throw "Class not defined on Set. Unable to instantiate element.";
+    }
+
+    // Use existing element if possible.
+    if (element !== null) {
+        return element;
+    }
+
+    // Otherwise create a new element and add it.
+    element = (new this._clazz(id));
+    this.add(element);
+    return element;
+};
+
+/**
+ * Retrieves an element by id.
+ *
+ * @param {Number|String}
+ * @return {Object}
+ */
+Set.prototype.find = function (id) {
+    var i;
+    for (i = 0; i < this._elements.length; i += 1) {
+        if (this._elements[i].id === id) {
+            return this._elements[i];
+        }
+    }
+    return null;
+};
+
+/**
+ * Checks for an existing element in the set with the same id.
+ *
+ * @param {Object}
+ * @return {Boolean}
+ */
+Set.prototype.contains = function (element) {
+    return (this.find(element.id) !== null);
+};
+
+/**
+ * Adds an element to the set.
+ *
+ * @param {Object}
+ * @return {Set}
+ */
+Set.prototype.add = function (element) {
+    if (!this.contains(element)) {
+        this._elements.push(element);
+        this.dispatchEvent(new Event("change"));
+    }
+    return this;
+};
+
+/**
+ * Removes an element from the set.
+ *
+ * @param {Object}
+ * @return {Set}
+ */
+Set.prototype.remove = function (element) {
+    var i;
+    for (i = 0; i < this._elements.length; i += 1) {
+        if (this._elements[i].id === element.id) {
+            this._elements.splice(i, 1);
+            this.dispatchEvent(new Event("change"));
+            break;
+        }
+    }
+    return this;
+};
+
+/**
+ * Removes all elements from the set.
+ *
+ * @return {Set}
+ */
+Set.prototype.removeAll = function () {
+    if (this._elements.length > 0) {
+        this._elements = [];
+        this.dispatchEvent(new Event("change"));
+    }
+    return this;
+};
+
+/**
+ * Filters the set down based on a given filter function.
+ *
+ * @return {Set}
+ */
+Set.prototype.filter = function (fn) {
+    this._elements = this._elements.filter(fn);
+    this.dispatchEvent(new Event("change"));
+    return this;
+};
+
+
+/**
+ * Retrieves a list of all elements as an array.
+ *
+ * @return {Array}
+ */
+Set.prototype.toArray = function () {
+    return this._elements.slice();
+};
+
+/**
+ * Clones the set.
+ *
+ * @return {Set}
+ */
+Set.prototype.clone = function () {
+    var i, clone = new Set();
+    clone._clazz = this._clazz;
+    clone._elements = this._elements.map(function (element) { return element.clone(); });
+    return clone;
+};
+
+module.exports = Set;
 
 });
 require.register("playback/lib/timer.js", function(exports, require, module){
@@ -1417,19 +1629,28 @@ require.register("playback/lib/timer.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
+var EventDispatcher = require('./event_dispatcher'),
+    Event           = require('./event');
+
 /**
  * Initializes a new Timer instance.
  */
-function Timer(fn) {
+function Timer(frame, fn) {
+    EventDispatcher.call(this);
+
     this._id = Timer.nextid;
     Timer.nextid += 1;
 
+    this._frame = frame;
     this._fn = fn;
     this._startTime = undefined;
     this._endTime = undefined;
     this._interval = undefined;
     this._running = true;
 }
+
+Timer.prototype = new EventDispatcher();
+Timer.prototype.constructor = Timer;
 
 Timer.nextid = 1;
 
@@ -1440,6 +1661,15 @@ Timer.nextid = 1;
  */
 Timer.prototype.id = function () {
     return this._id;
+};
+
+/**
+ * Retrieves the frame this timer is associated with.
+ *
+ * @return {Frame}
+ */
+Timer.prototype.frame = function () {
+    return this._frame;
 };
 
 /**
@@ -1526,12 +1756,51 @@ Timer.prototype.duration = function (value) {
 };
 
 /**
- * Retrieves whether the timer is actively running.
+ * Creates a timer after this timer ends.
  *
- * @return {Boolean}
+ * @param {Function}
  */
-Timer.prototype.running = function () {
-    return this._running;
+Timer.prototype.then = function (fn) {
+    var frame = this.frame(),
+        startTime = frame.playhead(),
+        timer = new Timer(frame, fn).startTime(startTime);
+
+    // HACK: We're adding the timer to the frame's timer list externally.
+    // This should be cleaned up when we better understand the model.
+    this.addEventListener("end", function () {
+        // Offset by the original playhead position.
+        var offset = frame.playhead() - startTime;
+        if (timer.startTime() !== undefined) {
+            timer.startTime(timer.startTime() + offset);
+        }
+        if (timer.endTime() !== undefined) {
+            timer.endTime(timer.endTime() + offset);
+        }
+
+        timer.startTime(frame.playhead());
+        frame._timers.push(timer);
+    });
+
+    return timer;
+};
+
+/**
+ * Sets or retrieves whether the timer is actively running. A timer can only
+ * move from running to not running (aka stopped). Resuming is not currently
+ * supported.
+ *
+ * @return {Frame|Boolean}
+ */
+Timer.prototype.running = function (value) {
+    if (arguments.length === 0) {
+        return this._running;
+    }
+    // Only update for stops.
+    if (this._running && !value) {
+        this.dispatchEvent(new Event("end"));
+        this._running = value;
+    }
+    return this;
 };
 
 /**
@@ -1540,7 +1809,7 @@ Timer.prototype.running = function () {
  * @return {Timer}
  */
 Timer.prototype.stop = function () {
-    this._running = false;
+    this.running(false);
     return this;
 };
 
@@ -1563,18 +1832,28 @@ Timer.prototype.until = function (t) {
         endTime   = this.endTime(),
         interval  = this.interval();
 
-    if (!this.running() || startTime === undefined || interval === undefined) {
+    // If timer is stopped then always return null.
+    if (!this.running()) {
+        return null;
+    }
+
+    // If we're past the end time then return null.
+    if (endTime !== undefined && t > endTime) {
         return null;
     }
 
     // If we haven't reached the start time then the next execution
     // is the start time.
-    if (startTime > t) {
+    if (startTime !== undefined && startTime > t) {
         return startTime;
     }
 
-    // If we're past the end time then return null.
-    if (endTime !== undefined && t > endTime) {
+    // If start time or interval are undefined then just return
+    // end time (if available).
+    if (startTime === undefined || interval === undefined) {
+        if (endTime !== undefined) {
+            return endTime;
+        }
         return null;
     }
 

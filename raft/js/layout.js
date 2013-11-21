@@ -12,9 +12,9 @@ define([], function () {
         H = [
             {height: 36, charWidth: 16.5, margin: {top:20, bottom:10}},
             {height: 30, charWidth: 14.8, margin: {top:20, bottom:10}},
-            {height: 24, margin: {top:20, bottom:10}},
-            {height: 18, margin: {top:10, bottom:10}},
-            {height: 14, margin: {top:10, bottom:10}},
+            {height: 24, charWidth: 14, margin: {top:20, bottom:10}},
+            {height: 18, charWidth: 13.5, margin: {top:10, bottom:10}},
+            {height: 14, charWidth: 13, margin: {top:10, bottom:10}},
         ];
 
     function Layout(selector) {
@@ -47,7 +47,7 @@ define([], function () {
      */
     Layout.prototype.nodes = function () {
         var model = this.model();
-        return (model !== null ? model.nodes() : []);
+        return (model !== null ? model.nodes.toArray() : []);
     };
 
     /**
@@ -222,8 +222,9 @@ define([], function () {
      * Repositions the nodes.
      */
     Layout.prototype.updateNodeLayout = function () {
-        var node, nodes, i, step, angle = ANGLE[this.nodes.length];
+        var node, nodes, i, step, angle;
         nodes = this.nodes();
+        angle = ANGLE[nodes.length];
 
         if (angle === undefined) {
             angle = 0;
