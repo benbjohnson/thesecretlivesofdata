@@ -1046,6 +1046,7 @@ Layout.prototype.player = function (value) {
     }
     this._player = value;
     this.initialize();
+    this.invalidateSize();
     return this;
 };
 
