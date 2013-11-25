@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global $, define, d3, playback*/
 
-define(["./dialog"], function (DialogLayout) {
+define(["./dialog_layout"], function (DialogLayout) {
     var WIDTH = 100,
         HEIGHT = 100;
 
@@ -40,7 +40,6 @@ define(["./dialog"], function (DialogLayout) {
      */
     BaseLayout.prototype.invalidate = function () {
         this.dialog.invalidate();
-        this.invalidateNodes();
     };
 
     /**

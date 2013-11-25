@@ -1611,6 +1611,24 @@ Set.prototype.toArray = function () {
 };
 
 /**
+ * Retrieves the number of elements in the set.
+ *
+ * @return {Number}
+ */
+Set.prototype.size = function () {
+    return this._elements.length;
+};
+
+/**
+ * Returns whether the set contains zero elements.
+ *
+ * @return {Boolean}
+ */
+Set.prototype.empty = function () {
+    return (this.size() === 0);
+};
+
+/**
  * Clones the set.
  *
  * @return {Set}

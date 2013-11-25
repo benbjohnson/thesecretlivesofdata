@@ -33,7 +33,13 @@ define([], function () {
         }).duration(2000)
 
         .then(function () {
-            model.clients.create(1);
+            dialog.h2 = ["With only one node, we don't need consensus."];
+            layout.invalidate();
+        }).duration(2000)
+
+        .then(function () {
+            dialog.h2 = ["When a client makes a change to the state of the node,", "the change is immediate."];
+            model.clients.create("C");
             layout.invalidate();
         }).duration(2000);
 
