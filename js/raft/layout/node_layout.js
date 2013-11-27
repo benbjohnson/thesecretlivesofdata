@@ -42,7 +42,7 @@ define([], function () {
         var self = this,
             nodes = this.nodes();
 
-        this.updateNodeLayout(x, y, w, h);
+        this.layout(x, y, w, h);
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
@@ -62,7 +62,7 @@ define([], function () {
             });
     };
 
-    NodeLayout.prototype.updateNodeLayout = function (x, y, w, h) {
+    NodeLayout.prototype.layout = function (x, y, w, h) {
         var node, i, step, 
             nodes = this.nodes(),
             angle = ANGLE[nodes.length];

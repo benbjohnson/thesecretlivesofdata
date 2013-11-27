@@ -869,6 +869,17 @@ Frame.prototype.timer = function (fn) {
 };
 
 /**
+ * Creates a single use timer that executes after a given delay.
+ *
+ * @param {Number}
+ * @param {Function}
+ * @return {Timer}
+ */
+Frame.prototype.after = function (delay, fn) {
+    return this.timer(fn).delay(delay);
+};
+
+/**
  * Creates a tween to update on each tick.
  *
  * @param {Function}
@@ -1663,8 +1674,8 @@ function Timer(frame, fn) {
     this._frame = frame;
     this._fn = fn;
     this._startTime = undefined;
-    this._endTime = undefined;
     this._interval = undefined;
+    this._duration = undefined;
     this._running = true;
 }
 
@@ -1705,20 +1716,6 @@ Timer.prototype.startTime = function (value) {
 };
 
 /**
- * Retrieves the end time of the timer. Returns undefined if there is
- * no end time.
- *
- * @return {Number}
- */
-Timer.prototype.endTime = function (value) {
-    if (arguments.length === 0) {
-        return this._endTime;
-    }
-    this._endTime = value;
-    return this;
-};
-
-/**
  * Retrieves the interval in milliseconds between executions.
  *
  * @return {Number}
@@ -1754,7 +1751,12 @@ Timer.prototype.delay = function (value) {
  * @param {Number}
  */
 Timer.prototype.times = function (value) {
-    this.endTime(this.startTime() + (this.interval() * (Math.max(1, value))));
+    if (value > 1) {
+        this.duration(this.interval() * (value - 1));
+    } else {
+        this.interval(undefined);
+        this.duration(undefined);
+    }
     return this;
 };
 
@@ -1765,12 +1767,13 @@ Timer.prototype.times = function (value) {
  */
 Timer.prototype.duration = function (value) {
     if (arguments.length === 0) {
-        if (this._endTime === undefined) {
-            return undefined;
-        }
-        return this._endTime - this._startTime;
+        return this._duration;
     }
-    this.endTime(this.startTime() + value);
+    if (value >= 0) {
+        this._duration = value;
+    } else {
+        this._duration = undefined;
+    }
     return this;
 };
 
@@ -1778,6 +1781,7 @@ Timer.prototype.duration = function (value) {
  * Creates a timer after this timer ends.
  *
  * @param {Function}
+ * @return {Timer}
  */
 Timer.prototype.then = function (fn) {
     var frame = this.frame(),
@@ -1792,15 +1796,23 @@ Timer.prototype.then = function (fn) {
         if (timer.startTime() !== undefined) {
             timer.startTime(timer.startTime() + offset);
         }
-        if (timer.endTime() !== undefined) {
-            timer.endTime(timer.endTime() + offset);
-        }
 
-        timer.startTime(frame.playhead());
         frame._timers.push(timer);
     });
 
     return timer;
+};
+
+/**
+ * Creates a timer that runs once after a given delay. The start time
+ * of the new timer is relative to the end time of this timer.
+ *
+ * @param {Number}
+ * @param {Function}
+ * @return {Timer}
+ */
+Timer.prototype.after = function (delay, fn) {
+    return this.then(fn).delay(delay);
 };
 
 /**
@@ -1846,43 +1858,35 @@ Timer.prototype.run = function () {
  * @return {Number}
  */
 Timer.prototype.until = function (t) {
-    var offset,
-        startTime = this.startTime(),
-        endTime   = this.endTime(),
-        interval  = this.interval();
+    var startTime = this.startTime(),
+        interval  = this.interval(),
+        duration  = this.duration(),
+        offset    = t - startTime;
 
-    // If timer is stopped then always return null.
+    // POSSIBLE TIMERS:
+    // - Single use:   startTime only
+    // - Neverending:  startTime + interval
+    // - Fixed length: startTime + interval + duration
     if (!this.running()) {
         return null;
     }
-
-    // If we're past the end time then return null.
-    if (endTime !== undefined && t > endTime) {
+    if (startTime === undefined) {
         return null;
     }
-
-    // If we haven't reached the start time then the next execution
-    // is the start time.
-    if (startTime !== undefined && startTime > t) {
+    if (t < startTime) {
         return startTime;
     }
-
-    // If start time or interval are undefined then just return
-    // end time (if available).
-    if (startTime === undefined || interval === undefined) {
-        if (endTime !== undefined) {
-            return endTime;
-        }
+    if (interval === undefined) {
+        return null;
+    }
+    if (duration !== undefined && t > startTime + duration) {
         return null;
     }
 
-    // If t is on an interval then return it.
-    offset = t - startTime;
+    // If t is on an interval then return it, otherwise return next interval.
     if (offset % interval === 0) {
         return t;
     }
-
-    // Otherwise find the next interval that occurs immediately after t.
     return startTime + ((Math.floor(offset / interval) + 1) * interval);
 };
 
