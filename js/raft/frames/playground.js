@@ -6,10 +6,10 @@
 define([], function () {
     return function (frame) {
         var model  = frame.model(),
-            dialog = model.dialog,
             layout = frame.layout(),
             node;
 
+        model.subtitle = '<h1>Test</h1>';
         model.nodes.create("A");
         model.nodes.create("B");
         model.nodes.create("C");

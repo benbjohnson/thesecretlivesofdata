@@ -1331,14 +1331,14 @@ Player.prototype.currentIndex = function (value) {
 
     // Move to new frame and initialize it.
     if (value >= 0 && value < this._frames.length && value !== this._currentIndex) {
-        model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
-        if (model !== null) {
-            model = model.clone();
-        }
-
         // End previous frame.
         if (this.current() !== null) {
             this.current().end();
+        }
+
+        model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
+        if (model !== null) {
+            model = model.clone();
         }
 
         this._currentIndex = value;

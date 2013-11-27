@@ -6,15 +6,13 @@
 define([], function () {
     return function (frame) {
         var model  = frame.model(),
-            dialog = model.dialog,
             layout = frame.layout();
 
-        dialog.h1 = ["Raft"];
-        dialog.h2 = ["Understandable Distributed Consensus"];
+        model.title = "<h1>Raft</h1><h2>Understandable Distributed Consensus</h2>";
         layout.invalidate();
 
         frame.addEventListener("end", function () {
-            dialog.h1 = dialog.h2 = [];
+            model.title = "";
         });
     };
 });

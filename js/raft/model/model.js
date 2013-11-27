@@ -3,9 +3,10 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback*/
 
-define(["./dialog", "./client", "./message", "./node"], function (Dialog, Client, Message, Node) {
+define(["./client", "./message", "./node"], function (Client, Message, Node) {
     function Model() {
-        this.dialog = new Dialog();
+        this.title = "";
+        this.subtitle = "";
         this.nodes = playback.set(Node);
         this.clients = playback.set(Client);
         this.messages = playback.set(Message);
@@ -28,7 +29,8 @@ define(["./dialog", "./client", "./message", "./node"], function (Dialog, Client
      */
     Model.prototype.clone = function () {
         var i, clone = new Model();
-        clone.dialog = this.dialog.clone();
+        clone.title = this.title;
+        clone.subtitle = this.subtitle;
         clone.nodes = this.nodes.clone();
         clone.clients = this.clients.clone();
         clone.messages = this.messages.clone();

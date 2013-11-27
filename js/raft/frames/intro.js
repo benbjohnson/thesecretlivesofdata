@@ -6,24 +6,20 @@
 define([], function () {
     return function (frame) {
         var model  = frame.model(),
-            dialog = model.dialog,
             layout = frame.layout(),
             node;
 
-        dialog.h1 = [];
-        dialog.h2 = ["So What is Distributed Consensus?"];
-        dialog.h3 = [""];
+        model.title = "<h2>So What is Distributed Consensus?</h2>";
         layout.invalidate();
 
         frame.after(3000, function () {
-            dialog.h3 = ["We'll start with an example..."];
+            model.title += "<h3>We'll start with an example...</h3>";
             layout.invalidate();
         })
 
         .after(2000, function () {
-            dialog.h2 = ["Let's say we have a single node system"];
-            dialog.h3 = [];
-            dialog.valign = "top";
+            model.title = "";
+            model.subtitle = "<h2>Let's say we have a single node system</h2>";
             layout.invalidate();
         })
         
@@ -33,18 +29,18 @@ define([], function () {
         })
 
         .after(2000, function () {
-            dialog.h2 = ["With only one node, we don't need consensus."];
+            model.subtitle = "<h2>With only one node, we don't need consensus.</h2>";
             layout.invalidate();
         })
 
         .after(2000, function () {
-            dialog.h2 = ["When a client makes a change to the state of the node,", "the change is immediate."];
+            model.subtitle = "<h2>When a client makes a change to the state of the node, the change is immediate.</h2>";
             model.clients.create("C");
             layout.invalidate();
         });
 
         frame.addEventListener("end", function () {
-            dialog.h1 = dialog.h2 = dialog.h3 = [];
+            model.subtitle = "";
             layout.invalidate();
         });
 

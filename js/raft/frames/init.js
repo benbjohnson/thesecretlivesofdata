@@ -6,7 +6,7 @@
 define(["./playground", "./title", "./intro"],
     function (playground, title, intro) {
         return function (player) {
-            player.frame(playground);
+            // player.frame(playground);
             player.frame(title);
             player.frame(intro);
         };
