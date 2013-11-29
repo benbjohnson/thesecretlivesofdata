@@ -19,6 +19,11 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
     $(doc).on("click", "#helpButton", function () {
     });
 
+    player.addEventListener("tick", function () {
+        player.current().model().tick(player.current().playhead());
+        player.layout().messages.invalidate();
+    });
+
     // Update frame index display on change.
     player.addEventListener("framechange", function () {
         $("#currentIndex").text(player.currentIndex() + 1);

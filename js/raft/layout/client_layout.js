@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var CLIENT_RADIUS_PX = 25;
+    var RADIUS_PX = 25;
 
     function ClientLayout(parent) {
         this._parent = parent;
@@ -52,9 +52,9 @@ define([], function () {
                     .style("fill", "green");
 
                 this.transition().duration(500)
-                    .attr("r", function (d) { return CLIENT_RADIUS_PX; })
-                    .attr("cx", function (d) { return self.parent().scales.x(d.x); })
-                    .attr("cy", function (d) { return self.parent().scales.y(d.y); });
+                    .attr("r", function (d) { return RADIUS_PX; })
+                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(d.x)); })
+                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(d.y)); });
 
                 this.exit().remove();
             });
@@ -66,8 +66,8 @@ define([], function () {
 
         for (i = 0; i < clients.length; i += 1) {
             client = clients[i];
-            client.x = x + Math.round(w / 2);
-            client.y = y + Math.round((i + 1) * (h / (clients.length + 1)));
+            client.x = x + w / 2;
+            client.y = y + (i + 1) * (h / (clients.length + 1));
         }
     };
 

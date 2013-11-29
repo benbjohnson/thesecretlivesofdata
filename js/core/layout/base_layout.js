@@ -54,7 +54,6 @@ define([], function () {
             paddingTop = (this.padding.top + (viewportHeight * pct)),
             html = '<div class="title">' + this.model().title + '</div>';
         this.title.html(html);
-        console.log("title:" + this.model().title);
         var title = this.title.select(".title");
         title.style("padding-top", (paddingTop - ($(title[0][0]).height() / 2)) + "px");
     };

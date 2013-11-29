@@ -1170,13 +1170,15 @@ var EventDispatcher = require('./event_dispatcher'),
     Event           = require('./event'),
     Frame           = require('./frame'),
     is              = require('is'),
-    nextTick        = require('next-tick'),
     periodic        = require('periodic');
 
 /**
  * Initializes a new Player instance.
  */
 function Player() {
+    var self = this,
+        animationFrame;
+
     EventDispatcher.call(this);
 
     this._rate = 0;
@@ -1190,6 +1192,20 @@ function Player() {
     this._resizeable = false;
     this._resizeableInitialized = false;
     this._sysresizehandler = null;
+
+    if (window.d3 !== undefined) {
+        // If D3 is available then piggyback on it's requestAnimationFrame.
+        window.d3.timer(function() {
+            self.tick();
+        });
+    } else {
+        // Otherwise fallback to the direct rAF API.
+        animationFrame = function() {
+            self.tick();
+            window.requestAnimationFrame(animationFrame);
+        }
+        window.requestAnimationFrame(animationFrame);
+    }
 }
 
 Player.prototype = new EventDispatcher();
@@ -1209,18 +1225,10 @@ Player.prototype.rate = function (value) {
     this._rate = Math.max(0, value);
 
     // Manage the ticker.
-    var self = this,
-        prevtick = new Date();
     if (this._rate > 0 && this._ticker === null) {
         this.tick(0);
-        this._ticker = periodic(100).on('tick', function () {
-            var t = new Date();
-            self.tick(self.rate() * (t.valueOf() - prevtick.valueOf()));
-            prevtick = t;
-        });
     } else if (this._rate === 0 && this._ticker !== null) {
-        self.tick(self.rate() * ((new Date()).valueOf() - prevtick.valueOf()));
-        this._ticker.end();
+        this.tick(this.rate() * ((new Date()).valueOf() - this._prevtick.valueOf()));
     }
 
     return this;
@@ -1452,15 +1460,21 @@ Player.prototype.resize = function () {
 
 /**
  * Updates the playhead of the current frame based on the elapsed time
- * and playback rate. The elapsed time argument is in player-time.
+ * and playback rate.
  */
-Player.prototype.tick = function (elapsed) {
+Player.prototype.tick = function () {
+    var t = new Date(),
+        prevtick = (this._prevtick !== null ? this._prevtick : t),
+        delta = (t.valueOf() - prevtick.valueOf()),
+        elapsed = this.rate() * delta;
+
     var frame = this.current();
-    if (frame === null) {
-        return;
+    if (frame !== null) {
+        frame.playhead(frame.playhead() + elapsed);
+        this.dispatchEvent(new Event("tick"));
     }
-    frame.playhead(frame.playhead() + elapsed);
-    this.dispatchEvent(new Event("tick"));
+
+    this._prevtick = t;
 };
 
 module.exports = Player;

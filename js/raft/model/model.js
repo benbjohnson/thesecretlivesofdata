@@ -15,12 +15,26 @@ define(["./client", "./message", "./node"], function (Client, Message, Node) {
     Model.prototype = playback.model();
 
     /**
+     * Finds either a node or client by id.
+     */
+    Model.prototype.find = function (id) {
+        var ret = null;
+        if (ret === null) {
+            ret = this.nodes.find(id);
+        }
+        if (ret === null) {
+            ret = this.clients.find(id);
+        }
+        return ret;
+    };
+
+    /**
      * Performs clean up of the model at time t.
      */
     Model.prototype.tick = function (t) {
         // Remove messages that have already been received.
         this.messages.filter(function(message) {
-            return (message.recvTime < t);
+            return (message.recvTime > t);
         });
     };
 

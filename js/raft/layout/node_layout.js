@@ -5,7 +5,7 @@
 
 define([], function () {
     var ANGLE = {3: 30, 5: 50},
-        NODE_RADIUS_PX = 25;
+        RADIUS_PX = 25;
 
     function NodeLayout(parent) {
         this._parent = parent;
@@ -49,15 +49,15 @@ define([], function () {
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "node")
-                    .attr("r", function (d) { return NODE_RADIUS_PX; })
-                    .attr("cx", function (d) { return self.parent().scales.x(x + (w / 2)); })
-                    .attr("cy", function (d) { return self.parent().scales.y(y + (h / 2)); })
+                    .attr("r", 0)
+                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(x + (w / 2))); })
+                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(y + (h / 2))); })
                     .style("fill", "steelblue");
 
                 this.transition().duration(500)
-                    .attr("r", function (d) { return NODE_RADIUS_PX; })
-                    .attr("cx", function (d) { return self.parent().scales.x(d.x); })
-                    .attr("cy", function (d) { return self.parent().scales.y(d.y); });
+                    .attr("r", function (d) { return RADIUS_PX; })
+                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(d.x)); })
+                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(d.y)); });
 
                 this.exit().remove();
             });
@@ -80,8 +80,8 @@ define([], function () {
             step = (2 * Math.PI) / nodes.length;
             for (i = 0; i < nodes.length; i += 1) {
                 node = nodes[i];
-                node.x = Math.round(x + (w / 2) + ((w / 2) * Math.cos(angle)));
-                node.y = Math.round(y + (h / 2) + ((w / 2) * Math.sin(angle)));
+                node.x = x + (w / 2) + ((w / 2) * Math.cos(angle));
+                node.y = y + (h / 2) + ((w / 2) * Math.sin(angle));
                 angle += step;
             }
         }

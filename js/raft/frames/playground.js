@@ -11,8 +11,6 @@ define([], function () {
 
         // model.subtitle = '<h1>Test</h1>';
         model.nodes.create("A");
-        model.nodes.create("B");
-        model.nodes.create("C");
         layout.invalidate();
 
         frame.after(500, function () {
@@ -21,12 +19,11 @@ define([], function () {
         })
 
         .after(500, function () {
-            model.clients.create("2");
-            layout.invalidate();
-        })
-
-        .after(500, function () {
-            model.clients.create("3");
+            var message = model.messages.create();
+            message.source = "1";
+            message.target = "A";
+            message.sendTime = frame.playhead();
+            message.recvTime = frame.playhead() + 1000;
             layout.invalidate();
         })
 

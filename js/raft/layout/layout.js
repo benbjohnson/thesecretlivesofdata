@@ -3,11 +3,12 @@
 /*jslint browser: true, nomen: true*/
 /*global $, define, d3, playback*/
 
-define(["../../core/layout/base_layout", "./node_layout", "./client_layout"], function (BaseLayout, NodeLayout, ClientLayout) {
+define(["../../core/layout/base_layout", "./node_layout", "./client_layout", "./message_layout"], function (BaseLayout, NodeLayout, ClientLayout, MessageLayout) {
     function Layout(selector) {
         BaseLayout.call(this, selector);
         this.nodes = new NodeLayout(this);
         this.clients = new ClientLayout(this);
+        this.messages = new MessageLayout(this);
     }
 
     Layout.prototype = new BaseLayout();
@@ -18,6 +19,7 @@ define(["../../core/layout/base_layout", "./node_layout", "./client_layout"], fu
      */
     Layout.prototype.initialize = function () {
         BaseLayout.prototype.initialize.call(this);
+        this.messages.g(this.svg.append("g"));
         this.nodes.g(this.svg.append("g"));
         this.clients.g(this.svg.append("g"));
     };
@@ -32,6 +34,7 @@ define(["../../core/layout/base_layout", "./node_layout", "./client_layout"], fu
 
         this.clients.invalidate(50 - ((nw + ncp + cw) / 2), 0, cw, 100);
         this.nodes.invalidate(50 - ((nw + ncp + cw) / 2) + cw + ncp, 0, nw, 100);
+        this.messages.invalidate();
     };
 
     return Layout;
