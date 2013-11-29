@@ -23,10 +23,15 @@ define(["../../core/layout/base_layout", "./node_layout", "./client_layout"], fu
     };
 
     Layout.prototype.invalidate = function () {
-        var cw = (this.model().clients.empty() ? 0 : 10);
+        // Node width, client width, node/client padding.
+        var nw = (this.model().nodes.empty() ? 0 : NodeLayout.WIDTH),
+            cw = (this.model().clients.empty() ? 0 : ClientLayout.WIDTH),
+            ncp = (nw > 0 && cw > 0 ? 10 : 0);
+
         BaseLayout.prototype.invalidate.call(this);
-        this.clients.invalidate(0, 0, cw, 100);
-        this.nodes.invalidate(cw, 0, 100, 100);
+
+        this.clients.invalidate(50 - ((nw + ncp + cw) / 2), 0, cw, 100);
+        this.nodes.invalidate(50 - ((nw + ncp + cw) / 2) + cw + ncp, 0, nw, 100);
     };
 
     return Layout;

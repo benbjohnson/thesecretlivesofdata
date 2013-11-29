@@ -5,12 +5,13 @@
 
 define([], function () {
     var ANGLE = {3: 30, 5: 50},
-        NODE_RADIUS_PX = 25,
-        CLUSTER_RADIUS = 25;
+        NODE_RADIUS_PX = 25;
 
     function NodeLayout(parent) {
         this._parent = parent;
     }
+
+    NodeLayout.WIDTH = 25;
 
     /**
      * Retrieves the parent layout.
@@ -79,8 +80,8 @@ define([], function () {
             step = (2 * Math.PI) / nodes.length;
             for (i = 0; i < nodes.length; i += 1) {
                 node = nodes[i];
-                node.x = Math.round(x + (w / 2) + (CLUSTER_RADIUS * Math.cos(angle)));
-                node.y = Math.round(y + (h / 2) + (CLUSTER_RADIUS * Math.sin(angle)));
+                node.x = Math.round(x + (w / 2) + ((w / 2) * Math.cos(angle)));
+                node.y = Math.round(y + (h / 2) + ((w / 2) * Math.sin(angle)));
                 angle += step;
             }
         }

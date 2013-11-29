@@ -10,6 +10,8 @@ define([], function () {
         this._parent = parent;
     }
 
+    ClientLayout.WIDTH = 10;
+
     /**
      * Retrieves the parent layout.
      */
@@ -64,8 +66,8 @@ define([], function () {
 
         for (i = 0; i < clients.length; i += 1) {
             client = clients[i];
-            client.x = Math.round(w / 2);
-            client.y = Math.round((i + 1) * (h / (clients.length + 1)));
+            client.x = x + Math.round(w / 2);
+            client.y = y + Math.round((i + 1) * (h / (clients.length + 1)));
         }
     };
 
