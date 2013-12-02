@@ -899,7 +899,6 @@ Frame.prototype.tween = function (fn, startValue, endValue, duration, delay) {
     var startTime = this.playhead() + delay,
         endTime = startTime + duration,
         tween = new Tween(fn, startValue, endValue, startTime, endTime);
-    console.log(startTime, endTime, startValue, endValue);
     this._tweens.push(tween);
 
     // Execute tween immediately if there is no delay.
@@ -1099,7 +1098,33 @@ require.register("playback/lib/model.js", function(exports, require, module){
  * Initializes a new Model instance.
  */
 function Model() {
+    this._player = null;
 }
+
+/**
+ * Sets or retrieves the player the model is attached to.
+ *
+ * @return {Model|Player}
+ */
+Model.prototype.player = function (value) {
+    if (arguments.length === 0) {
+        return this._player;
+    }
+    this._player = value;
+    return this;
+};
+
+/**
+ * Retrieves the playhead of the current frame.
+ *
+ * @return {Number}
+ */
+Model.prototype.playhead = function () {
+    if (this.player() !== null && this.player().current() !== null) {
+        return this.player().current().playhead();
+    }
+    return null;
+};
 
 /**
  * Clones the current state of the model.
@@ -1165,12 +1190,14 @@ require.register("playback/lib/player.js", function(exports, require, module){
 
 "use strict";
 /*jslint browser: true, nomen: true*/
+/*global window*/
 
 var EventDispatcher = require('./event_dispatcher'),
     Event           = require('./event'),
     Frame           = require('./frame'),
     is              = require('is'),
-    periodic        = require('periodic');
+    periodic        = require('periodic'),
+    _               = require('./raf');
 
 /**
  * Initializes a new Player instance.
@@ -1193,19 +1220,12 @@ function Player() {
     this._resizeableInitialized = false;
     this._sysresizehandler = null;
 
-    if (window.d3 !== undefined) {
-        // If D3 is available then piggyback on it's requestAnimationFrame.
-        window.d3.timer(function() {
-            self.tick();
-        });
-    } else {
-        // Otherwise fallback to the direct rAF API.
-        animationFrame = function() {
-            self.tick();
-            window.requestAnimationFrame(animationFrame);
-        }
+    // Setup animation timer.
+    animationFrame = function () {
+        self.tick();
         window.requestAnimationFrame(animationFrame);
-    }
+    };
+    this._rAFID = window.requestAnimationFrame(animationFrame);
 }
 
 Player.prototype = new EventDispatcher();
@@ -1245,12 +1265,23 @@ Player.prototype.play = function () {
 };
 
 /**
- * Stops the player.
+ * Pauses the player.
  *
  * @return {Player}
  */
 Player.prototype.pause = function () {
     this.rate(0);
+    return this;
+};
+
+/**
+ * Stops the player completely. Player cannot be restarted.
+ *
+ * @return {Player}
+ */
+Player.prototype.stop = function () {
+    this.pause(0);
+    window.cancelAnimationFrame(this._rAFID);
     return this;
 };
 
@@ -1347,6 +1378,7 @@ Player.prototype.currentIndex = function (value) {
         model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
         if (model !== null) {
             model = model.clone();
+            model.player(this);
         }
 
         this._currentIndex = value;
@@ -1387,7 +1419,16 @@ Player.prototype.model = function (value) {
     if (arguments.length === 0) {
         return this._model;
     }
+
+    if (this._model !== null) {
+        this._model.player(null);
+    }
+
     this._model = value;
+
+    if (this._model !== null) {
+        this._model.player(this);
+    }
 
     // Initialize first frame now that we have a model.
     if (this.current() === null) {
@@ -1463,12 +1504,12 @@ Player.prototype.resize = function () {
  * and playback rate.
  */
 Player.prototype.tick = function () {
-    var t = new Date(),
+    var frame = this.current(),
+        t = new Date(),
         prevtick = (this._prevtick !== null ? this._prevtick : t),
         delta = (t.valueOf() - prevtick.valueOf()),
         elapsed = this.rate() * delta;
 
-    var frame = this.current();
     if (frame !== null) {
         frame.playhead(frame.playhead() + elapsed);
         this.dispatchEvent(new Event("tick"));
@@ -1478,6 +1519,45 @@ Player.prototype.tick = function () {
 };
 
 module.exports = Player;
+
+});
+require.register("playback/lib/raf.js", function(exports, require, module){
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+// 
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+//
+// MIT license
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+/*global window*/
+
+var x,
+    lastTime = 0,
+    vendors = ['ms', 'moz', 'webkit', 'o'];
+for (x = 0; x < vendors.length && !window.requestAnimationFrame; x += 1) {
+    window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+}
+
+if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = function (callback, element) {
+        var currTime = new Date().getTime(),
+            timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+            id = window.setTimeout(function () { callback(currTime + timeToCall); }, timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    };
+}
+
+if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = function (id) {
+        clearTimeout(id);
+    };
+}
+
+module.exports = null;
 
 });
 require.register("playback/lib/set.js", function(exports, require, module){
@@ -1887,7 +1967,7 @@ Timer.prototype.until = function (t) {
     if (startTime === undefined) {
         return null;
     }
-    if (t < startTime) {
+    if (t <= startTime) {
         return startTime;
     }
     if (interval === undefined) {

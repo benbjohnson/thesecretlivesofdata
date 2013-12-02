@@ -39,6 +39,20 @@ define(["./client", "./message", "./node"], function (Client, Message, Node) {
     };
 
     /**
+     * Sends a message between two nodes.
+     *
+     * @return {Message}
+     */
+    Model.prototype.send = function (source, target, duration) {
+        var message = this.messages.create();
+        message.source = (typeof(source) == "string" ? source : source.id);
+        message.target = (typeof(target) == "string" ? target : target.id);
+        message.sendTime = this.playhead();
+        message.recvTime = message.sendTime + duration;
+        return message;
+    };
+
+    /**
      * Clones the model.
      */
     Model.prototype.clone = function () {
