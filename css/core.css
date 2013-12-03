@@ -7,7 +7,6 @@
   z-index: 940;
   overflow: auto;
   overflow-y: scroll;
-  pointer-events: none;
 }
 
 .title {
@@ -18,7 +17,6 @@
   padding: 10px;
   margin-left: auto;
   margin-right: auto;
-  pointer-events: none;
   text-align: center;
 }
 
@@ -30,7 +28,6 @@
   z-index: 940;
   overflow: auto;
   overflow-y: scroll;
-  pointer-events: none;
 }
 
 .subtitle {
@@ -42,6 +39,10 @@
   padding: 10px;
   margin-left: auto;
   margin-right: auto;
-  pointer-events: none;
   text-align: center;
+}
+
+
+.tsld-resume {
+  margin-top: 14px;
 }

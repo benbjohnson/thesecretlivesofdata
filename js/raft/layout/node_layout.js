@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var ANGLE = {3: 30, 5: 50},
+    var ANGLE = {2: 90, 3: 30, 5: 50},
         RADIUS_PX = 25;
 
     function NodeLayout(parent) {
@@ -81,7 +81,7 @@ define([], function () {
             for (i = 0; i < nodes.length; i += 1) {
                 node = nodes[i];
                 node.x = x + (w / 2) + ((w / 2) * Math.cos(angle));
-                node.y = y + (h / 2) + ((w / 2) * Math.sin(angle));
+                node.y = y + (h / 2) + ((w / 1.125) * Math.sin(angle));
                 angle += step;
             }
         }

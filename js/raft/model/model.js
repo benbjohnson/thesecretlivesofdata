@@ -3,16 +3,23 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback*/
 
-define(["./client", "./message", "./node"], function (Client, Message, Node) {
+define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
     function Model() {
         this.title = "";
         this.subtitle = "";
+        this.controls = new Controls(this);
         this.nodes = playback.set(Node);
         this.clients = playback.set(Client);
         this.messages = playback.set(Message);
     }
 
     Model.prototype = playback.model();
+
+    /**
+     * Retrieves the HTML 
+     */
+    Model.prototype.nextButton = function () {
+    };
 
     /**
      * Finds either a node or client by id.

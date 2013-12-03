@@ -26,9 +26,17 @@ define(["../../core/layout/base_layout", "./node_layout", "./client_layout", "./
 
     Layout.prototype.invalidate = function () {
         // Node width, client width, node/client padding.
-        var nw = (this.model().nodes.empty() ? 0 : NodeLayout.WIDTH),
-            cw = (this.model().clients.empty() ? 0 : ClientLayout.WIDTH),
-            ncp = (nw > 0 && cw > 0 ? 10 : 0);
+        var ncp,
+            nw = 0,
+            cw = (this.model().clients.empty() ? 0 : ClientLayout.WIDTH);
+
+        // 1- and 2-node clusters are vertical so shrink their size.
+        if (this.model().nodes.size() > 2) {
+            nw = NodeLayout.WIDTH;
+        } else if (this.model().nodes.size() > 0) {
+            nw = NodeLayout.WIDTH / 2;
+        }
+        ncp = (nw > 0 && cw > 0 ? 10 : 0);
 
         BaseLayout.prototype.invalidate.call(this);
 

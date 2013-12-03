@@ -1832,10 +1832,9 @@ Timer.prototype.interval = function (value) {
  * @param {Number}
  */
 Timer.prototype.delay = function (value) {
-    if (value <= 0) {
-        return;
+    if (value > 0) {
+        this._startTime += value;
     }
-    this._startTime += value;
     return this;
 };
 

@@ -9,11 +9,18 @@ define([], function () {
             layout = frame.layout(),
             client, node;
 
-        // model.subtitle = '<h1>Test</h1>';
-        node = model.nodes.create("A");
-        layout.invalidate();
+        frame.after(1, function () {
+            model.subtitle = '<h1>Test</h1>';
+            node = model.nodes.create("A");
+            layout.invalidate();
+        })
 
-        frame.after(500, function () {
+        .after(500, function () {
+            model.nodes.create("B");
+            layout.invalidate();
+        })
+
+        .after(500, function () {
             client = model.clients.create("1");
             layout.invalidate();
         })
