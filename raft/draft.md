@@ -9,15 +9,15 @@
 
 ### What is Distributed Consensus?
 
-* h2="So what is Distributed Consensus?"
+* title="So what is Distributed Consensus?"
+        "Let's start with an example..."
 
-* h3="Let's start with an example:"
-
-* h2="",
-  h3="Let's say we have a single node system."
+* subtitle="Let's say we have a single node system."
   addNode()
 
-* h3="With only one node, we don't need consensus."
+* subtitle="For our example, let's say the node can store a single value."
+
+* subtitle="With only one node, we don't need consensus."
 
 * h3="When a client makes a change to the state of the node, the change is immediate."
   addClient()

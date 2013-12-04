@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var RADIUS_PX = 25;
+    var RADIUS = 5;
 
     function ClientLayout(parent) {
         this._parent = parent;
@@ -46,17 +46,33 @@ define([], function () {
 
         this.g().selectAll(".client").data(clients, function (d) { return d.id; })
             .call(function () {
-                this.enter().append("circle")
-                    .attr("class", "client")
+                var transform = function(d) { return "translate(" + Math.round(self.parent().scales.x(d.x)) + "," + Math.round(self.parent().scales.y(d.y)) + ")"; };
+
+                var g = this.enter().append("g").attr("class", "client");
+                g.attr("transform", transform);
+                g.append("circle")
                     .attr("r", 0)
                     .style("fill", "green");
+                g.append("text")
+                    .attr("y", "2")
+                    .attr("fill", "white")
+                    .attr("dominant-baseline", "middle")
+                    .attr("text-anchor", "middle");
 
-                this.transition().duration(500)
-                    .attr("r", function (d) { return RADIUS_PX; })
-                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(d.x)); })
-                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(d.y)); });
+                g = this;
+                g = g.transition().duration(500);
+                g.attr("transform", transform);
+                g.select("circle")
+                    .attr("r", function (d) { return Math.round(self.parent().scales.r(d.r)); })
+                g.select("text")
+                    .attr("font-size", function(d) { return self.parent().scales.font(12)})
+                    .text(function (d) { return d.value; });
 
-                this.exit().remove();
+                g = this.exit()
+                g.select("text").remove();
+                g = g.transition().duration(500)
+                g.select("circle").style("fill-opacity", 0);
+                g.remove();
             });
     };
 
@@ -66,8 +82,9 @@ define([], function () {
 
         for (i = 0; i < clients.length; i += 1) {
             client = clients[i];
-            client.x = x + w / 2;
-            client.y = y + (i + 1) * (h / (clients.length + 1));
+            client.r = RADIUS;
+            client.x = x + (w / 2);
+            client.y = y + ((i + 1) * (h / (clients.length + 1)));
         }
     };
 

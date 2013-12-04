@@ -6,6 +6,7 @@
 define([], function () {
     function Node(id) {
         this.id = id;
+        this.value = "";
         this.entries = [];
     }
 

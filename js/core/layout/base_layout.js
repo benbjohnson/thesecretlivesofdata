@@ -4,9 +4,6 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var WIDTH = 100,
-        HEIGHT = 100;
-
     function BaseLayout(selector) {
         this.selector = selector;
         this.prevTitle = this.prevSubtitle = "";
@@ -26,11 +23,13 @@ define([], function () {
     BaseLayout.prototype.initialize = function () {
         this.container = $(this.selector);
         this.svg = d3.select(this.selector).append("svg");
-        this.title = d3.select(this.selector).append("div").attr("class", "title-container");
+        this.title = d3.select(this.selector).append("div").attr("class", "title-container").style("display", "none");
         this.subtitle = d3.select(this.selector).append("div").attr("class", "subtitle-container");
         this.scales = {
             x: d3.scale.linear(),
             y: d3.scale.linear(),
+            r: d3.scale.linear(),
+            font: d3.scale.linear(),
         };
         this.invalidateSize();
     };
@@ -39,7 +38,22 @@ define([], function () {
      * Redraws the entire model.
      */
     BaseLayout.prototype.invalidate = function () {
-        if (this.model()) {
+        var model = this.model(),
+            width = this.container.width(),
+            height = $(window).height() - this.padding.top - this.padding.bottom;
+
+        this.svg.attr("width", width).attr("height", height);
+
+        if (model) {
+            var zoom = {
+                x:((model.domains.x[1] - model.domains.x[0]) / 100),
+                y:((model.domains.y[1] - model.domains.y[0]) / 100),
+            };
+            this.scales.x.domain(model.domains.x).range([0, width]);
+            this.scales.y.domain(model.domains.y).range([0, height]);
+            this.scales.r.domain([0, 100 * Math.min(zoom.x, zoom.y)]).range([0, Math.min(width, height)]);
+            this.scales.font.domain([0, 100 * Math.min(zoom.x, zoom.y)]).range([0, 180]);
+
             this.invalidateTitle();
             this.invalidateSubtitle();
         }
@@ -68,6 +82,7 @@ define([], function () {
             else if(this.prevTitle !== "" && title === "") {
                 this.fadeOut($(this.title[0][0]), function() {
                     self.title.html(html);
+                    self.title.style("display", "none");
                 });
             }
             // Update title.
@@ -116,14 +131,6 @@ define([], function () {
      * Adjusts the size of the layout and adjusts the scales.
      */
     BaseLayout.prototype.invalidateSize = function () {
-        var width = this.container.width(),
-            height = $(window).height() - this.padding.top - this.padding.bottom;
-
-        this.scales.x.domain([0, WIDTH]).range([0, width]);
-        this.scales.y.domain([0, HEIGHT]).range([0, height]);
-
-        this.svg.attr("width", width).attr("height", height);
-
         if (this.model()) {
             this.invalidate();
         }

@@ -5,7 +5,7 @@
 
 define([], function () {
     var ANGLE = {2: 90, 3: 30, 5: 50},
-        RADIUS_PX = 25;
+        RADIUS = 5;
 
     function NodeLayout(parent) {
         this._parent = parent;
@@ -47,19 +47,33 @@ define([], function () {
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
-                this.enter().append("circle")
-                    .attr("class", "node")
+                var transform = function(d) { return "translate(" + Math.round(self.parent().scales.x(d.x)) + "," + Math.round(self.parent().scales.y(d.y)) + ")"; };
+
+                var g = this.enter().append("g").attr("class", "node");
+                g.attr("transform", transform);
+                g.append("circle")
                     .attr("r", 0)
-                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(x + (w / 2))); })
-                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(y + (h / 2))); })
                     .style("fill", "steelblue");
+                g.append("text")
+                    .attr("y", "2")
+                    .attr("fill", "white")
+                    .attr("dominant-baseline", "middle")
+                    .attr("text-anchor", "middle");
 
-                this.transition().duration(500)
-                    .attr("r", function (d) { return RADIUS_PX; })
-                    .attr("cx", function (d) { return Math.round(self.parent().scales.x(d.x)); })
-                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(d.y)); });
+                g = this;
+                g = g.transition().duration(500);
+                g.attr("transform", transform);
+                g.select("circle")
+                    .attr("r", function (d) { return Math.round(self.parent().scales.r(d.r)); })
+                g.select("text")
+                    .attr("font-size", function(d) { return self.parent().scales.font(12)})
+                    .text(function (d) { return d.value; });
 
-                this.exit().remove();
+                g = this.exit()
+                g.select("text").remove();
+                g = g.transition().duration(500)
+                g.select("circle").style("fill-opacity", 0);
+                g.remove();
             });
     };
 
@@ -84,6 +98,10 @@ define([], function () {
                 node.y = y + (h / 2) + ((w / 1.125) * Math.sin(angle));
                 angle += step;
             }
+        }
+
+        for (i = 0; i < nodes.length; i += 1) {
+            nodes[i].r = RADIUS;
         }
     };
 

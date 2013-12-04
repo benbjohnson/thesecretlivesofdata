@@ -46,3 +46,7 @@
 .tsld-resume {
   margin-top: 14px;
 }
+
+.tsld-resume:focus {
+    outline: none;
+}

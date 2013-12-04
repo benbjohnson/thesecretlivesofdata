@@ -11,6 +11,10 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.nodes = playback.set(Node);
         this.clients = playback.set(Client);
         this.messages = playback.set(Message);
+        this.domains = {
+            x: [0, 100],
+            y: [0, 100],
+        };
     }
 
     Model.prototype = playback.model();
