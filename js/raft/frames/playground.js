@@ -5,13 +5,15 @@
 
 define([], function () {
     return function (frame) {
-        var model  = frame.model(),
+        var player = frame.player(),
+            model  = frame.model(),
             layout = frame.layout(),
             client, node;
 
         frame.after(1, function () {
             model.subtitle = '<h1>Test</h1>';
             node = model.nodes.create("A");
+            node.value = "X";
             layout.invalidate();
         })
 
@@ -22,7 +24,6 @@ define([], function () {
         })
 
         .after(500, function () {
-            model.nodes.remove(model.nodes.find("C"));
             client = model.clients.create("1");
             layout.invalidate();
         })
@@ -44,15 +45,17 @@ define([], function () {
         })
 
         .after(500, function () {
-            model.domains.x = [node.x - node.r, node.x + node.r];
-            model.domains.y = [node.y - node.r, node.y + node.r];
+            model.zoom(node);
             layout.invalidate();
         })
 
         .after(1000, function () {
-            model.domains.x = [0, 100];
-            model.domains.y = [0, 100];
+            model.zoom(null);
             layout.invalidate();
+        })
+
+        .after(1000, function () {
+            player.next();
         })
 
         frame.player().rate(1);

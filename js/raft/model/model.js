@@ -20,12 +20,6 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
     Model.prototype = playback.model();
 
     /**
-     * Retrieves the HTML 
-     */
-    Model.prototype.nextButton = function () {
-    };
-
-    /**
      * Finds either a node or client by id.
      */
     Model.prototype.find = function (id) {
@@ -61,6 +55,47 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         message.sendTime = this.playhead();
         message.recvTime = message.sendTime + duration;
         return message;
+    };
+
+    /**
+     * Zooms in on a given node or zooms out to full screen.
+     */
+    Model.prototype.zoom = function (nodes) {
+        var i, node,
+            x = {min: 0, max: 100},
+            y = {min: 0, max: 100};
+
+        // Zoom out if no nodes are specified.
+        if (nodes === null) {
+            this.domains.x = [0, 100];
+            this.domains.y = [0, 100];
+            return;
+        }
+
+        // Find the x and y ranges to constrain the zoom bbox.
+        if (typeof(nodes) !== "array") {
+            nodes = [nodes];
+        }
+        for (i = 0; i < nodes.length; i += 1) {
+            node = nodes[i];
+            x.min = Math.max(x.min, node.x - node.r);
+            x.max = Math.min(x.max, node.x + node.r);
+            y.min = Math.max(y.min, node.y - node.r);
+            y.max = Math.min(y.max, node.y + node.r);
+        }
+
+        this.domains.x = [x.min, x.max];
+        this.domains.y = [y.min, y.max];
+    };
+
+    /**
+     * Removes all data from the model.
+     */
+    Model.prototype.clear = function () {
+        this.title = this.subtitle = "";
+        this.nodes.removeAll();
+        this.clients.removeAll();
+        this.messages.removeAll();
     };
 
     /**

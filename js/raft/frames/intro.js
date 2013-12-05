@@ -10,10 +10,15 @@ define([], function () {
             layout = frame.layout(),
             client, node;
 
-        frame.after(1, function () {
+        frame.after(1, function() {
+            model.clear();
+            layout.invalidate();
+        })
+
+        .after(1000, function () {
             model.title = '<h2 style="visibility:visible">So What is Distributed Consensus?</h2>'
                         + '<h3 style="visibility:hidden;">Let\'s start with an example...</h3>'
-            model.subtitle = model.controls.resume.html();
+                        + '<br/>' + model.controls.resume.html();
             layout.invalidate();
         })
         .after(1000, function () {
@@ -29,7 +34,7 @@ define([], function () {
 
 
         .after(800, function () {
-            model.subtitle = "<h2>Let's say we have a single node system</h2>"
+            model.subtitle = '<h2>Let\'s say we have a single node system</h2>'
                            + model.controls.resume.html();
             layout.invalidate();
         })
@@ -40,29 +45,96 @@ define([], function () {
         .after(200, function () {
             model.controls.resume.show();
         })
-        
 
-        .after(10, function () {
-            model.subtitle = "<h2>With only one node, we don't need consensus.</h2>"
+
+        .after(100, function () {
+            model.subtitle = "";
+            model.zoom(node);
+            layout.invalidate();
+        })
+        .after(600, function () {
+            model.subtitle = '<h3>For this example, you can think of our <span style="color:steelblue">node</span> as a database server that stores a single value.</h3>'
                            + model.controls.resume.html();
             layout.invalidate();
         })
-        .after(200, function () {
+        .after(1000, function () {
+            node.value = "x";
+            layout.invalidate();
+        })
+        .after(100, function () {
             model.controls.resume.show();
         })
+        
 
-
-        .after(10, function () {
-            model.subtitle = "<h2>Changes to the entire system are immediate.</h2>"
+        .after(100, function () {
+            model.subtitle = "";
+            model.zoom(null);
+            layout.invalidate();
+        })
+        .after(1000, function () {
+            model.subtitle = '<h3>We also have a <span style="color:green">client</span> that can send a value to the server.</h3>'
                            + model.controls.resume.html();
+            layout.invalidate();
+        })
+        .after(500, function () {
             client = model.clients.create("C");
             layout.invalidate();
         })
-        .after(1000, function() {
+        .after(500, function () {
+            model.controls.resume.show();
+        })
+
+
+        .after(100, function () {
+            client.value = "8";
+            layout.invalidate();
+        })
+        .after(1300, function () {
             model.send(client, node, 1000);
+            layout.invalidate();
         })
         .after(1000, function () {
+            node.value = "8";
+            layout.invalidate();
+        })
+        .after(100, function () {
+            model.subtitle = '<h3>Coming to agreement on that value, or <em>consensus</em>, is easy with one node.</h3>'
+                           + model.controls.resume.html();
+            layout.invalidate();
             model.controls.resume.show();
+        })
+
+
+        .after(100, function () {
+            model.subtitle = '<h3>But how do we come to consensus if we have multiple nodes?</h3>'
+                           + model.controls.resume.html();
+            layout.invalidate();
+        })
+        .after(500, function () {
+            model.nodes.create("B");
+            layout.invalidate();
+        })
+        .after(500, function () {
+            model.nodes.create("C");
+            layout.invalidate();
+        })
+        .after(100, function () {
+            model.controls.resume.show();
+        })
+
+
+        .after(100, function () {
+            model.subtitle = '<h3>That\'s the problem of <em>distributed consensus</em>.</h3>'
+                           + model.controls.resume.html();
+            layout.invalidate();
+        })
+        .after(100, function () {
+            model.controls.resume.show();
+        })
+
+
+        .after(100, function () {
+            player.next();
         })
 
 
@@ -71,6 +143,6 @@ define([], function () {
             layout.invalidate();
         });
 
-        frame.player().play();
+        player.play();
     };
 });

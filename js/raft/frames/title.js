@@ -5,14 +5,30 @@
 
 define([], function () {
     return function (frame) {
-        var model  = frame.model(),
+        var player = frame.player(),
+            model  = frame.model(),
             layout = frame.layout();
 
-        model.title = "<h1>Raft</h1><h2>Understandable Distributed Consensus</h2>";
-        layout.invalidate();
+        frame.after(1, function() {
+            model.clear();
+            layout.invalidate();
+        })
 
-        frame.addEventListener("end", function () {
-            model.title = "";
-        });
+        .after(500, function () {
+            model.title = '<h1 style="visibility:visible">Raft</h1>'
+                        + '<h2 style="visibility:visible">Understandable Distributed Consensus</h2>'
+                        + '<br/>' + model.controls.resume.html();
+            layout.invalidate();
+        })
+        .after(500, function () {
+            model.controls.resume.show();
+        })
+
+
+        .after(100, function () {
+            player.next();
+        })
+        
+        player.play();
     };
 });

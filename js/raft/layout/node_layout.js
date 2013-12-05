@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var ANGLE = {2: 90, 3: 30, 5: 50},
+    var ANGLE = {2: 90, 3: 120, 5: 50},
         RADIUS = 5;
 
     function NodeLayout(parent) {
@@ -47,10 +47,12 @@ define([], function () {
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
-                var transform = function(d) { return "translate(" + Math.round(self.parent().scales.x(d.x)) + "," + Math.round(self.parent().scales.y(d.y)) + ")"; };
+                var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; };
 
-                var g = this.enter().append("g").attr("class", "node");
-                g.attr("transform", transform);
+                var g = this.enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", transform)
+                    .each(function(d) { this.__data__.g = this });
                 g.append("circle")
                     .attr("r", 0)
                     .style("fill", "steelblue");
@@ -64,12 +66,13 @@ define([], function () {
                 g = g.transition().duration(500);
                 g.attr("transform", transform);
                 g.select("circle")
-                    .attr("r", function (d) { return Math.round(self.parent().scales.r(d.r)); })
+                    .attr("r", function (d) { return self.parent().scales.r(d.r); })
                 g.select("text")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
                     .text(function (d) { return d.value; });
 
                 g = this.exit()
+                    .each(function(d) { this.__data__.g = null });
                 g.select("text").remove();
                 g = g.transition().duration(500)
                 g.select("circle").style("fill-opacity", 0);

@@ -9,7 +9,7 @@ define([], function () {
         this.prevTitle = this.prevSubtitle = "";
         this.padding = {
             top: 70,
-            bottom: 20,
+            bottom: 160,
             left: 0,
             right: 0,
         };
@@ -23,8 +23,8 @@ define([], function () {
     BaseLayout.prototype.initialize = function () {
         this.container = $(this.selector);
         this.svg = d3.select(this.selector).append("svg");
-        this.title = d3.select(this.selector).append("div").attr("class", "title-container").style("display", "none");
-        this.subtitle = d3.select(this.selector).append("div").attr("class", "subtitle-container");
+        this.title = d3.select(this.selector).append("div").attr("class", "container title-container").style("display", "none");
+        this.subtitle = d3.select(this.selector).append("div").attr("class", "container subtitle-container");
         this.scales = {
             x: d3.scale.linear(),
             y: d3.scale.linear(),
@@ -114,9 +114,7 @@ define([], function () {
             }
             // Fade out.
             else if(this.prevSubtitle !== "" && text === "") {
-                this.fadeOut($(this.subtitle[0][0]), function() {
-                    self.subtitle.html(html);
-                });
+                this.fadeOut($(this.subtitle[0][0]));
             }
             // Update subtitle.
             else {

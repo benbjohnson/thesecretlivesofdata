@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var RADIUS_PX = 10;
+    var RADIUS = 2;
 
     function MessageLayout(parent) {
         this._parent = parent;
@@ -32,7 +32,11 @@ define([], function () {
 
     MessageLayout.prototype.invalidate = function () {
         var self = this,
-            messages = this.messages();
+            messages = this.messages(),
+            rdomain = this.parent().scales.r.domain(),
+            rscaling = (this.rprev === undefined || this.rprev[0] !== rdomain[0] || this.rprev[1] !== rdomain[1]),
+            r = function (d) { return self.parent().scales.r(d.r); };
+        this.rprev = rdomain;
 
         this.layout();
 
@@ -40,13 +44,22 @@ define([], function () {
             .call(function () {
                 this.enter().append("circle")
                     .attr("class", "message")
-                    .attr("r", function (d) { return RADIUS_PX; })
-                    .style("fill", "red");
+                    .attr("r", r)
+                    .style("fill", "red")
+                    .each(function(d) { this.__data__.g = this });
 
-                this.attr("cx", function (d) { return Math.round(self.parent().scales.x(d.x)); })
-                    .attr("cy", function (d) { return Math.round(self.parent().scales.y(d.y)); });
+                this.attr("cx", function (d) { return d.x_px; })
+                    .attr("cy", function (d) { return d.y_px; });
 
-                this.exit().remove();
+                // Scale r only if the domain has changed.
+                if (rscaling) {
+                    this.transition().duration(500)
+                        .attr("r", r);
+                }
+
+                this.exit()
+                    .each(function(d) { this.__data__.g = null })
+                    .remove();
             });
     };
 
@@ -57,12 +70,13 @@ define([], function () {
 
         for (i = 0; i < messages.length; i += 1) {
             message = messages[i];
-            source = model.find(message.source);
-            target = model.find(message.target);
+            source = model.find(message.source).g.transform.baseVal.getItem(0).matrix;
+            target = model.find(message.target).g.transform.baseVal.getItem(0).matrix;
             pct = (this.parent().current().playhead() - message.sendTime) / (message.recvTime - message.sendTime);
 
-            message.x = source.x + ((target.x - source.x) * pct);
-            message.y = source.y + ((target.y - source.y) * pct);
+            message.x_px = source.e + ((target.e - source.e) * pct);
+            message.y_px = source.f + ((target.f - source.f) * pct);
+            message.r = RADIUS;
         }
     };
 
