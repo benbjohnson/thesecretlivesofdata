@@ -1,50 +1,67 @@
-# Raft: Understandable Consensus
+##
+Nodes A, B, C
+"Raft is a protocol for implementing distributed consensus."
 
-## Frames
+##
+"Let's look at a high level overview of how it works."
 
-### Intro
+##
+"First a node will change to a <em>candidate</em> state.""
+A.state = "candidate"
 
-* h1="Raft", h2="Understandable Distributed Consensus"
+##
+"The candidate will then request votes to become the <em>leader</em>.""
+A.send(A, B)
+A.send(A, C)
+
+##
+"The other nodes will response with a vote for the candidate node.""
+A.send(B, A)
+A.send(C, A)
+
+##
+"Once a majority of votes is received, the candidate becomes the <em>leader</em>."
+A.state = "leader"
+
+##
+"This is called <em>leader election</em>."
 
 
-### What is Distributed Consensus?
+##
+"Once a leader is elected, all changes are made through the leader node."
+Client "X"
+X.value = 8
+send(X, A)
 
-* title="So what is Distributed Consensus?"
-        "Let's start with an example..."
+##
+"Each change is written to a log."
+A.log.append("SET 8")
 
-* subtitle="Let's say we have a single node system."
-  addNode()
+##
+"Then the log is replicated to the <em>follower</em> nodes."
+send(A, B, 1000)
+send(A, C, 1000)
+B.log.append("SET 8")
+C.log.append("SET 8")
+etc, etc.
 
-* subtitle="For our example, let's say the node can store a single value."
+##
+"The follower nodes notify the leader that they have written the log changes"
+send(B, A, 1000)
+send(C, A, 1000)
 
-* subtitle="With only one node, we don't need consensus."
+##
+The log entry is <em>committed</em> once it is committed on a majority of nodes.
+A.commitIndex = 1;
+A.value = "8"
 
-* h3="When a client makes a change to the state of the node, the change is immediate."
-  addClient()
-  client.send(node, "10")
+##
+The leader then notifies followers of the committed entry.
+send(A, B, 1000)
+send(A, C, 1000)
+B.commitIndex = C.commitIndex = 1;
+B.value = C.value = "8"
 
-* h3="Unfortunately, if our node dies then our system becomes unavailable temporarily."
-  node.shutdown()
-
-* h3="Or worse, we could lose our data entirely"
-  removeNode(node)
-
-* h3="To solve this, we add more nodes for redundancy."
-  addNode(), addNode(), addNode()
-
-* h3="Now we have a different problem: Replication"
-
-* h3="We could choose one leader node to write to and all changes are copied to follower nodes"
-  client.send(node1, "10")
-  node1.send(node2, "10")
-  node1.send(node3, "10")
-
-* h3="This is called a replicated log."
-  client.send(node1, "20")
-  node1.send(node2, "20")
-  node1.send(node3, "20")
-
-* h3="But how do we get all nodes to agree on a leader?"
-
-* h3="Distributed Consensus is about getting a group of distributed nodes to agree on a single value"
+##
+"This is called <em>log replication</em>."
 

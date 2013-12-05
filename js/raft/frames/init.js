@@ -9,5 +9,6 @@ define(["./playground", "./title", "./intro"],
             player.frame(playground);
             player.frame(title);
             player.frame(intro);
+            player.frame(intro);
         };
     });

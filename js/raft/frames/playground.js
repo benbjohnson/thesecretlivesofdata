@@ -8,19 +8,27 @@ define([], function () {
         var player = frame.player(),
             model  = frame.model(),
             layout = frame.layout(),
-            client, node;
+            nodes = {},
+            client;
 
         frame.after(1, function () {
             model.subtitle = '<h1>Test</h1>';
-            node = model.nodes.create("A");
-            node.value = "X";
+            nodes.a = model.nodes.create("A");
+            nodes.a.value = "X";
             layout.invalidate();
         })
 
         .after(500, function () {
-            model.nodes.create("B");
-            model.nodes.create("C");
+            nodes.b = model.nodes.create("B");
+            nodes.c = model.nodes.create("C");
             layout.invalidate();
+        })
+
+        .after(500, function () {
+            nodes.a.state = "candidate";
+            nodes.b.state = "leader";
+            layout.invalidate();
+            player.pause();
         })
 
         .after(500, function () {
@@ -35,17 +43,17 @@ define([], function () {
 
         .after(500, function () {
             client.value = "";
-            model.send(client, node, 1000)
+            model.send(client, nodes.a, 1000)
             layout.invalidate();
         })
 
         .after(1000, function () {
-            node.value = "1";
+            nodes.a.value = "1";
             layout.invalidate();
         })
 
         .after(500, function () {
-            model.zoom(node);
+            model.zoom(nodes.a);
             layout.invalidate();
         })
 

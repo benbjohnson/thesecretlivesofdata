@@ -47,7 +47,11 @@ define([], function () {
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
-                var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; };
+                var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; },
+                    stroke = {
+                        dash: function (d) { return (d.state === "candidate" ? "5,5" : ""); },
+                        opacity: function (d) { return (d.state === "follower" ? 0 : 1); },
+                    };
 
                 var g = this.enter().append("g")
                     .attr("class", "node")
@@ -55,6 +59,10 @@ define([], function () {
                     .each(function(d) { this.__data__.g = this });
                 g.append("circle")
                     .attr("r", 0)
+                    .style("stroke", "black")
+                    .style("stroke-width", 3)
+                    .style("stroke-dasharray", stroke.dash)
+                    .style("stroke-opacity", stroke.opacity)
                     .style("fill", "steelblue");
                 g.append("text")
                     .attr("y", "2")
@@ -67,6 +75,8 @@ define([], function () {
                 g.attr("transform", transform);
                 g.select("circle")
                     .attr("r", function (d) { return self.parent().scales.r(d.r); })
+                    .style("stroke-dasharray", stroke.dash)
+                    .style("stroke-opacity", stroke.opacity);
                 g.select("text")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
                     .text(function (d) { return d.value; });
@@ -75,7 +85,9 @@ define([], function () {
                     .each(function(d) { this.__data__.g = null });
                 g.select("text").remove();
                 g = g.transition().duration(500)
-                g.select("circle").style("fill-opacity", 0);
+                g.select("circle")
+                    .style("stroke-opacity", 0)
+                    .style("fill-opacity", 0);
                 g.remove();
             });
     };
