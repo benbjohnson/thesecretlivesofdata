@@ -35,25 +35,25 @@ define([], function () {
         .after(500, function () {
             nodes.a.state = "candidate";
             nodes.b.state = "leader";
-            model.zoom(nodes.a);
+            model.zoom([nodes.a]);
             layout.invalidate();
         })
 
         .after(600, function () {
             nodes.a.log.entries.pop();
-            model.zoom(nodes.a);
+            model.zoom([nodes.a]);
             layout.invalidate();
         })
 
         .after(600, function () {
             nodes.a.log.entries.pop();
-            model.zoom(nodes.a);
+            model.zoom([nodes.a]);
             layout.invalidate();
         })
 
         .after(600, function () {
             nodes.a.log.entries.pop();
-            model.zoom(nodes.a);
+            model.zoom([nodes.a]);
             layout.invalidate();
         })
 
@@ -84,7 +84,7 @@ define([], function () {
         })
 
         .after(500, function () {
-            model.zoom(nodes.a);
+            model.zoom([nodes.a]);
             layout.invalidate();
         })
 

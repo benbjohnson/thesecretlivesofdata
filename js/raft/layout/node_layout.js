@@ -56,12 +56,11 @@ define([], function () {
 
                 var g = this.enter().append("g")
                     .attr("class", "node")
-                    .attr("transform", transform)
-                    .each(function(d) { this.__data__.g = this });
+                    .attr("transform", transform);
                 g.append("circle")
                     .attr("r", 0)
                     .style("stroke", "black")
-                    .style("stroke-width", 3)
+                    .style("stroke-width", 5)
                     .style("stroke-dasharray", stroke.dash)
                     .style("stroke-opacity", stroke.opacity)
                     .style("fill", "steelblue");
@@ -74,6 +73,7 @@ define([], function () {
                 g.append("g").attr("class", "log")
 
                 g = this;
+                g.each(function(d) { this.__data__.g = this });
                 g = g.transition().duration(500);
                 g.attr("transform", transform);
                 g.select("circle")
@@ -116,7 +116,7 @@ define([], function () {
                                 .attr("y", text.y)
                                 .attr("fill", text.fill)
                                 .attr("font-size", function(d) { return self.parent().scales.font(8) + "px"})
-                                .text(function (d) { return "[" + d.index + "] " + d.command; })
+                                .text(function (d) { return d.command; })
                                 ;
 
                             this.exit().remove();

@@ -49,7 +49,7 @@ define([], function () {
 
         .after(100, function () {
             model.subtitle = "";
-            model.zoom(node);
+            model.zoom([node]);
             layout.invalidate();
         })
         .after(600, function () {
@@ -77,7 +77,7 @@ define([], function () {
             layout.invalidate();
         })
         .after(500, function () {
-            client = model.clients.create("C");
+            client = model.clients.create("X");
             layout.invalidate();
         })
         .after(500, function () {
@@ -86,6 +86,7 @@ define([], function () {
 
 
         .after(100, function () {
+            model.subtitle += "";
             client.value = "8";
             layout.invalidate();
         })

@@ -50,8 +50,7 @@ define([], function () {
 
                 var g = this.enter().append("g")
                     .attr("class", "client")
-                    .attr("transform", transform)
-                    .each(function(d) { this.__data__.g = this });
+                    .attr("transform", transform);
                 g.append("circle")
                     .attr("r", 0)
                     .style("fill", "green");
@@ -62,6 +61,7 @@ define([], function () {
                     .attr("text-anchor", "middle");
 
                 g = this;
+                g.each(function(d) { this.__data__.g = this });
                 g = g.transition().duration(500);
                 g.attr("transform", transform);
                 g.select("circle")

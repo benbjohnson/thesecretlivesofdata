@@ -60,18 +60,17 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
 
     /**
      * Zooms in on a given node or zooms out to full screen.
+     *
+     * @param {Array}
      */
     Model.prototype.zoom = function (nodes) {
         var i, node,
             bbox = null;
 
         // Passing in a null node clears the zoom.
-        if (nodes === null) {
+        if (nodes === null || nodes === undefined || nodes.length === 0) {
             bbox = new BBox(0, 100, 100, 0);
         } else {
-            if (typeof(nodes) !== "array") {
-                nodes = [nodes];
-            }
             // Find the x and y ranges to constrain the zoom bbox.
             bbox = nodes[0].bbox();
             for (i = 1; i < nodes.length; i += 1) {
