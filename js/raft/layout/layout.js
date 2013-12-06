@@ -19,9 +19,9 @@ define(["../../core/layout/base_layout", "./node_layout", "./client_layout", "./
      */
     Layout.prototype.initialize = function () {
         BaseLayout.prototype.initialize.call(this);
-        this.messages.g(this.svg.append("g"));
-        this.nodes.g(this.svg.append("g"));
-        this.clients.g(this.svg.append("g"));
+        this.messages.g(this.g.append("g"));
+        this.nodes.g(this.g.append("g"));
+        this.clients.g(this.g.append("g"));
     };
 
     Layout.prototype.invalidate = function () {

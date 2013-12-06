@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define*/
 
-define([], function () {
+define(["./bbox"], function (BBox) {
     var nextId = 0;
 
     function Message(id) {
@@ -15,6 +15,13 @@ define([], function () {
         this.recvTime = 0;
         this.text = "";
     }
+
+    /**
+     * Determines the bounding box of the message.
+     */
+    Message.prototype.bbox = function () {
+        return new BBox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
+    };
 
     Message.prototype.clone = function () {
         var i, clone = new Message();

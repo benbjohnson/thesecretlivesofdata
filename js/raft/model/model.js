@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback*/
 
-define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
+define(["./controls", "./client", "./message", "./node", "./bbox"], function (Controls, Client, Message, Node, BBox) {
     function Model() {
         this.title = "";
         this.subtitle = "";
@@ -11,6 +11,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.nodes = playback.set(Node);
         this.clients = playback.set(Client);
         this.messages = playback.set(Message);
+        this.bbox = new BBox(0, 100, 100, 0);
         this.domains = {
             x: [0, 100],
             y: [0, 100],
@@ -62,30 +63,25 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
      */
     Model.prototype.zoom = function (nodes) {
         var i, node,
-            x = {min: 0, max: 100},
-            y = {min: 0, max: 100};
+            bbox = null;
 
-        // Zoom out if no nodes are specified.
+        // Passing in a null node clears the zoom.
         if (nodes === null) {
-            this.domains.x = [0, 100];
-            this.domains.y = [0, 100];
-            return;
+            bbox = new BBox(0, 100, 100, 0);
+        } else {
+            if (typeof(nodes) !== "array") {
+                nodes = [nodes];
+            }
+            // Find the x and y ranges to constrain the zoom bbox.
+            bbox = nodes[0].bbox();
+            for (i = 1; i < nodes.length; i += 1) {
+                bbox = bbox.union(nodes[i].bbox());
+            }
         }
 
-        // Find the x and y ranges to constrain the zoom bbox.
-        if (typeof(nodes) !== "array") {
-            nodes = [nodes];
-        }
-        for (i = 0; i < nodes.length; i += 1) {
-            node = nodes[i];
-            x.min = Math.max(x.min, node.x - node.r);
-            x.max = Math.min(x.max, node.x + node.r);
-            y.min = Math.max(y.min, node.y - node.r);
-            y.max = Math.min(y.max, node.y + node.r);
-        }
-
-        this.domains.x = [x.min, x.max];
-        this.domains.y = [y.min, y.max];
+        this.bbox = bbox;
+        this.domains.x = [bbox.left, bbox.right];
+        this.domains.y = [bbox.top, bbox.bottom];
     };
 
     /**

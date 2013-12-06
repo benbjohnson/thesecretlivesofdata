@@ -4,6 +4,8 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
+    var PAD = 5;
+
     function BaseLayout(selector) {
         this.selector = selector;
         this.prevTitle = this.prevSubtitle = "";
@@ -21,16 +23,24 @@ define([], function () {
      * Initializes the layout.
      */
     BaseLayout.prototype.initialize = function () {
+        var self = this;
         this.container = $(this.selector);
         this.svg = d3.select(this.selector).append("svg");
+        this.g = this.svg.append("g");
         this.title = d3.select(this.selector).append("div").attr("class", "container title-container").style("display", "none");
         this.subtitle = d3.select(this.selector).append("div").attr("class", "container subtitle-container");
+
         this.scales = {
             x: d3.scale.linear(),
             y: d3.scale.linear(),
-            r: d3.scale.linear(),
-            font: d3.scale.linear(),
+            w: d3.scale.linear(),
+            h: d3.scale.linear(),
+            r: function(v) { return Math.min(self.scales.w(v), self.scales.h(v)); },
+            font: function(v) { return Math.min(self.scales.font.x(v), self.scales.font.y(v)); },
         };
+        this.scales.font.x = d3.scale.linear();
+        this.scales.font.y = d3.scale.linear();
+
         this.invalidateSize();
     };
 
@@ -40,19 +50,26 @@ define([], function () {
     BaseLayout.prototype.invalidate = function () {
         var model = this.model(),
             width = this.container.width(),
-            height = $(window).height() - this.padding.top - this.padding.bottom;
+            height = $(window).height() - this.padding.top - this.padding.bottom,
+            viewport = {
+                width: width - (PAD * 2),
+                height: height - (PAD * 2),
+            };
 
         this.svg.attr("width", width).attr("height", height);
+        this.g.attr("transform", "translate(" + PAD + "," + PAD + ")");
 
         if (model) {
             var zoom = {
                 x:((model.domains.x[1] - model.domains.x[0]) / 100),
                 y:((model.domains.y[1] - model.domains.y[0]) / 100),
             };
-            this.scales.x.domain(model.domains.x).range([0, width]);
-            this.scales.y.domain(model.domains.y).range([0, height]);
-            this.scales.r.domain([0, 100 * Math.min(zoom.x, zoom.y)]).range([0, Math.min(width, height)]);
-            this.scales.font.domain([0, 100 * Math.min(zoom.x, zoom.y)]).range([0, 180]);
+            this.scales.x.domain(model.domains.x).range([0, viewport.width]);
+            this.scales.y.domain(model.domains.y).range([0, viewport.height]);
+            this.scales.w.domain([0, model.domains.x[1] - model.domains.x[0]]).range([0, viewport.width]);
+            this.scales.h.domain([0, model.domains.y[1] - model.domains.y[0]]).range([0, viewport.height]);
+            this.scales.font.x.domain([0, 100 * zoom.x]).range([0, viewport.width * 0.17]);
+            this.scales.font.y.domain([0, 100 * zoom.y]).range([0, viewport.height * 0.4]);
 
             this.invalidateTitle();
             this.invalidateSubtitle();

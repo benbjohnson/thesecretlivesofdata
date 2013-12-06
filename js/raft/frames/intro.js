@@ -89,7 +89,7 @@ define([], function () {
             client.value = "8";
             layout.invalidate();
         })
-        .after(1300, function () {
+        .after(1000, function () {
             model.send(client, node, 1000);
             layout.invalidate();
         })

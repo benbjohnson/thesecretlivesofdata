@@ -33,10 +33,10 @@ define([], function () {
     MessageLayout.prototype.invalidate = function () {
         var self = this,
             messages = this.messages(),
-            rdomain = this.parent().scales.r.domain(),
-            rscaling = (this.rprev === undefined || this.rprev[0] !== rdomain[0] || this.rprev[1] !== rdomain[1]),
+            bbox = this.parent().model().bbox,
+            rscaling = bbox.equal(this.prevbbox),
             r = function (d) { return self.parent().scales.r(d.r); };
-        this.rprev = rdomain;
+        this.prevbbox = bbox;
 
         this.layout();
 

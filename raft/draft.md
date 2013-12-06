@@ -1,3 +1,6 @@
+Frame: Overview
+========
+
 ##
 Nodes A, B, C
 "Raft is a protocol for implementing distributed consensus."
@@ -51,7 +54,7 @@ send(B, A, 1000)
 send(C, A, 1000)
 
 ##
-The log entry is <em>committed</em> once it is committed on a majority of nodes.
+The log entry is <em>committed</em> once it is written on a majority of nodes.
 A.commitIndex = 1;
 A.value = "8"
 

@@ -4,7 +4,8 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var ANGLE = {2: 90, 3: 120, 5: 50},
+    var ANGLE = {2: 90, 3: 150, 5: 50},
+        ENTRY = {x: 3, y: 4, w:8, h:4},
         RADIUS = 5;
 
     function NodeLayout(parent) {
@@ -65,10 +66,12 @@ define([], function () {
                     .style("stroke-opacity", stroke.opacity)
                     .style("fill", "steelblue");
                 g.append("text")
+                    .attr("class", "node-value")
                     .attr("y", "2")
                     .attr("fill", "white")
                     .attr("dominant-baseline", "middle")
                     .attr("text-anchor", "middle");
+                g.append("g").attr("class", "log")
 
                 g = this;
                 g = g.transition().duration(500);
@@ -77,9 +80,48 @@ define([], function () {
                     .attr("r", function (d) { return self.parent().scales.r(d.r); })
                     .style("stroke-dasharray", stroke.dash)
                     .style("stroke-opacity", stroke.opacity);
-                g.select("text")
+                g.select("text.node-value")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
                     .text(function (d) { return d.value; });
+
+                g.each(function(node) {
+                    d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log.entries)
+                        .call(function() {
+                            var transform = function(d) { return "translate(" + self.parent().scales.w(d.dx) + "," + self.parent().scales.h(d.dy) + ")"};
+                            var text = {
+                                x: function(d) { return self.parent().scales.w(0.25); },
+                                y: function(d) { return (self.parent().scales.h(d.h) / 2) + 2; },
+                                fill: function(d) { return (d.index <= node.log.commitIndex ? "black" : "red"); },
+                            };
+                            var g = this.enter().append("g").attr("class", "log-entry");
+                            g.attr("transform", transform);
+                            g.append("rect")
+                                .attr("shape-rendering", "crispEdges")
+                                .attr("stroke", "black")
+                                .attr("fill", "white");
+                            g.append("text")
+                                .attr("x", text.x)
+                                .attr("y", text.y)
+                                .attr("dominant-baseline", "middle")
+                                .attr("font-family", "Courier New")
+                                .attr("fill", text.fill);
+
+                            g = this.transition().duration(500)
+                                .attr("transform", transform);
+                            g.select("rect")
+                                .attr("width", function(d) { return self.parent().scales.w(d.w)})
+                                .attr("height", function(d) { return self.parent().scales.h(d.h)})
+                            g.select("text")
+                                .attr("x", text.x)
+                                .attr("y", text.y)
+                                .attr("fill", text.fill)
+                                .attr("font-size", function(d) { return self.parent().scales.font(8) + "px"})
+                                .text(function (d) { return "[" + d.index + "] " + d.command; })
+                                ;
+
+                            this.exit().remove();
+                        })
+                })
 
                 g = this.exit()
                     .each(function(d) { this.__data__.g = null });
@@ -93,7 +135,7 @@ define([], function () {
     };
 
     NodeLayout.prototype.layout = function (x, y, w, h) {
-        var node, i, step, 
+        var i, j, node, entry, step, 
             nodes = this.nodes(),
             angle = ANGLE[nodes.length];
 
@@ -116,7 +158,19 @@ define([], function () {
         }
 
         for (i = 0; i < nodes.length; i += 1) {
+            node = nodes[i];
             nodes[i].r = RADIUS;
+
+            for (j = 0; j < node.log.entries.length; j += 1) {
+                entry = node.log.entries[j];
+                entry.dx = ENTRY.x;
+                entry.dy = ENTRY.y + (ENTRY.h * j);
+                entry.x = node.x + entry.dx;
+                entry.y = node.y + entry.dy;
+                entry.w = ENTRY.w;
+                entry.h = ENTRY.h;
+            }
+            
         }
     };
 
