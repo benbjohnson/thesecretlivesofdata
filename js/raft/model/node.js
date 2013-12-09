@@ -26,6 +26,7 @@ define(["./log", "./bbox"], function (Log, BBox) {
     Node.prototype.clone = function () {
         var i, clone = new Node();
         clone.id = this.id;
+        clone.state = this.state;
         clone.log = this.log.clone();
         return clone;
     };

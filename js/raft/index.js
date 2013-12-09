@@ -19,6 +19,15 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
     $(doc).on("click", "#helpButton", function () {
     });
 
+    $(doc).on("click", ".tsld-rollback", function() {
+        player.current().rollback(2);
+        player.layout().invalidate();
+        player.play();
+    });
+    $(doc).on("click", ".tsld-resume", function() {
+        player.play();
+    });
+
     player.addEventListener("tick", function () {
         player.current().model().tick(player.current().playhead());
         player.layout().messages.invalidate();

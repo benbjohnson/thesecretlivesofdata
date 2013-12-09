@@ -730,8 +730,8 @@ require.register("playback/lib/frame.js", function(exports, require, module){
 
 var EventDispatcher = require('./event_dispatcher'),
     Event           = require('./event'),
+    Snapshot        = require('./snapshot'),
     Timer           = require('./timer'),
-    Tween           = require('./tween'),
     is              = require('is');
 
 /**
@@ -749,7 +749,7 @@ function Frame(fn) {
     this._duration = 0;
     this._model = null;
     this._timers = [];
-    this._tweens = [];
+    this._snapshots = [];
 }
 
 Frame.prototype = new EventDispatcher();
@@ -798,7 +798,7 @@ Frame.prototype.player = function (value) {
  * @return {Boolean}
  */
 Frame.prototype.playhead = function (value) {
-    var self = this, i, timer, timers, tween, tweens;
+    var self = this, i, timer, timers;
     if (arguments.length === 0) {
         return this._playhead;
     }
@@ -838,13 +838,6 @@ Frame.prototype.playhead = function (value) {
     this._playhead = value;
     this._duration = Math.max(this._duration, this._playhead);
 
-    // Update all tweens.
-    tweens = this.tweens();
-    for (i = 0; i < tweens.length; i += 1) {
-        tween = tweens[i];
-        tween.update(this._playhead);
-    }
-
     return this;
 };
 
@@ -880,36 +873,6 @@ Frame.prototype.after = function (delay, fn) {
 };
 
 /**
- * Creates a tween to update on each tick.
- *
- * @param {Function}
- * @param {Number}
- */
-Frame.prototype.tween = function (fn, startValue, endValue, duration, delay) {
-    if (duration === undefined) {
-        duration = 0;
-    }
-    duration = Math.max(0, duration);
-
-    if (delay === undefined) {
-        delay = 0;
-    }
-    delay = Math.max(0, delay);
-
-    var startTime = this.playhead() + delay,
-        endTime = startTime + duration,
-        tween = new Tween(fn, startValue, endValue, startTime, endTime);
-    this._tweens.push(tween);
-
-    // Execute tween immediately if there is no delay.
-    if (delay === 0) {
-        tween.update();
-    }
-
-    return tween;
-};
-
-/**
  * Retrieves a list of active timers sorted by time until next frame.
  */
 Frame.prototype.timers = function () {
@@ -938,20 +901,6 @@ Frame.prototype.timers = function () {
 };
 
 /**
- * Retrieves a list of active tweens sorted by start time.
- */
-Frame.prototype.tweens = function () {
-    var playhead = this.playhead();
-    this._tweens = this._tweens.filter(function (tween) {
-        return playhead < tween.endTime();
-    });
-    this._tweens = this._tweens.sort(function (a, b) {
-        return a.startTime - b.startTime;
-    });
-    return this._tweens;
-};
-
-/**
  * Sets or retrieves the initial frame data model.
  *
  * @return {Frame|Object}
@@ -975,6 +924,47 @@ Frame.prototype.layout = function (value) {
 };
 
 /**
+ * Snapshots the state of the frame.
+ */
+Frame.prototype.snapshot = function () {
+    var snapshot = new Snapshot(this);
+    this._snapshots.push(snapshot);
+    return snapshot;
+};
+
+/**
+ * Restores the state of the frame from a given snapshot state.
+ */
+Frame.prototype.restore = function (snapshot) {
+    var index = this._snapshots.indexOf(snapshot);
+    if (index !== -1) {
+        this._snapshots = this._snapshots.slice(0, index);
+    }
+    this._playhead = snapshot.playhead() - 1;
+    this._timers = snapshot.timers();
+    this._model = snapshot.model();
+    return this;
+};
+
+/**
+ * Restores the last available snapshot.
+ */
+Frame.prototype.rollback = function (offset) {
+    var index = Math.max(0, this._snapshots.length - offset);
+    if (index < this._snapshots.length) {
+        this.restore(this._snapshots[index]);
+    }
+    return this;
+};
+
+/**
+ * Returns whether the frame can be rollbacked by the given number of snapshots.
+ */
+Frame.prototype.rollbackable = function (offset) {
+    return offset <= this._snapshots.length;
+};
+
+/**
  * Resets the playhead and clears the timers on the frame.
  */
 Frame.prototype.reset = function () {
@@ -985,6 +975,7 @@ Frame.prototype.reset = function () {
         this._timers[0].stop();
     }
     this._timers = [];
+    this._snapshots = [];
 };
 
 module.exports = Frame;
@@ -1197,7 +1188,8 @@ var EventDispatcher = require('./event_dispatcher'),
     Frame           = require('./frame'),
     is              = require('is'),
     periodic        = require('periodic'),
-    _               = require('./raf');
+    _               = require('./raf'),
+    MAX_DELTA       = 50;
 
 /**
  * Initializes a new Player instance.
@@ -1375,11 +1367,7 @@ Player.prototype.currentIndex = function (value) {
             this.current().end();
         }
 
-        model = (this.frame(value - 1) !== null ? this.frame(value - 1).model() : this.model());
-        if (model !== null) {
-            model = model.clone();
-            model.player(this);
-        }
+        model = this.model().clone();
 
         this._currentIndex = value;
         frame = this._frames[value];
@@ -1507,7 +1495,7 @@ Player.prototype.tick = function () {
     var frame = this.current(),
         t = new Date(),
         prevtick = (this._prevtick !== null ? this._prevtick : t),
-        delta = (t.valueOf() - prevtick.valueOf()),
+        delta = Math.min(MAX_DELTA, (t.valueOf() - prevtick.valueOf())),
         elapsed = this.rate() * delta;
 
     if (frame !== null) {
@@ -1558,6 +1546,60 @@ if (!window.cancelAnimationFrame) {
 }
 
 module.exports = null;
+
+});
+require.register("playback/lib/snapshot.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+/**
+ * Initializes a new Snapshot instance.
+ */
+function Snapshot(frame) {
+    var i, timers;
+    this._playhead = frame.playhead();
+    this._model = frame.model().clone();
+    this._timers = [];
+
+    timers = frame.timers();
+    for (i = 0; i < timers.length; i += 1) {
+        this._timers.push(timers[i].clone());
+    }
+}
+
+/**
+ * Returns the playhead of the snapshot.
+ *
+ * @return {Number}
+ */
+Snapshot.prototype.playhead = function () {
+    return this._playhead;
+};
+
+/**
+ * Returns a clone of the model of the snapshot.
+ *
+ * @return {Model}
+ */
+Snapshot.prototype.model = function () {
+    return this._model.clone();
+};
+
+/**
+ * Returns the timers at the time of the snapshot.
+ *
+ * @return {Array}
+ */
+Snapshot.prototype.timers = function () {
+    var i, timers = [];
+    for (i = 0; i < this._timers.length; i += 1) {
+        timers.push(this._timers[i].clone());
+    }
+    return timers;
+};
+
+module.exports = Snapshot;
 
 });
 require.register("playback/lib/set.js", function(exports, require, module){
@@ -1771,6 +1813,7 @@ function Timer(frame, fn) {
     this._interval = undefined;
     this._duration = undefined;
     this._running = true;
+    this._dependents = [];
 }
 
 Timer.prototype = new EventDispatcher();
@@ -1877,21 +1920,10 @@ Timer.prototype.duration = function (value) {
  * @return {Timer}
  */
 Timer.prototype.then = function (fn) {
-    var frame = this.frame(),
-        startTime = frame.playhead(),
-        timer = new Timer(frame, fn).startTime(startTime);
+    var startTime = this.frame().playhead(),
+        timer = new Timer(this.frame(), fn).startTime(startTime);
 
-    // HACK: We're adding the timer to the frame's timer list externally.
-    // This should be cleaned up when we better understand the model.
-    this.addEventListener("end", function () {
-        // Offset by the original playhead position.
-        var offset = frame.playhead() - startTime;
-        if (timer.startTime() !== undefined) {
-            timer.startTime(timer.startTime() + offset);
-        }
-
-        frame._timers.push(timer);
-    });
+    this._dependents.push({startTime: startTime, timer: timer});
 
     return timer;
 };
@@ -1916,11 +1948,25 @@ Timer.prototype.after = function (delay, fn) {
  * @return {Frame|Boolean}
  */
 Timer.prototype.running = function (value) {
+    var i, dependent, offset;
     if (arguments.length === 0) {
         return this._running;
     }
+
     // Only update for stops.
     if (this._running && !value) {
+        // Generate dependent timers when this one finishes.
+        for (i = 0; i < this._dependents.length; i += 1) {
+            dependent = this._dependents[i];
+
+            // Offset by the original playhead position.
+            offset = this.frame().playhead() - dependent.startTime;
+            if (dependent.timer.startTime() !== undefined) {
+                dependent.timer.startTime(dependent.timer.startTime() + offset);
+            }
+            this.frame()._timers.push(dependent.timer);
+        }
+
         this.dispatchEvent(new Event("end"));
         this._running = value;
     }
@@ -1983,118 +2029,30 @@ Timer.prototype.until = function (t) {
     return startTime + ((Math.floor(offset / interval) + 1) * interval);
 };
 
+/**
+ * Returns a copy of the timer.
+ *
+ * @return {Timer}
+ */
+Timer.prototype.clone = function () {
+    var i, clone = new Timer(this._frame, this._fn);
+    clone._id = this._id;
+    clone._startTime = this._startTime;
+    clone._interval = this._interval;
+    clone._duration = this._duration;
+    clone._running = this._running;
+
+    for (i = 0; i < this._dependents.length; i += 1) {
+        clone._dependents.push({
+            startTime: this._dependents[i].startTime,
+            timer: this._dependents[i].timer.clone(),
+        });
+    }
+    return clone;
+};
+
+
 module.exports = Timer;
-
-});
-require.register("playback/lib/tween.js", function(exports, require, module){
-
-"use strict";
-/*jslint browser: true, nomen: true*/
-
-var ease    = require('./ease'),
-    functor = require('./functor'),
-    is      = require('is');
-
-/**
- * Initializes a new Tween instance.
- */
-function Tween(fn, startValue, endValue, startTime, endTime) {
-    if (!is.fn(fn)) {
-        fn = null;
-    }
-    this._fn = fn;
-    this._startValue = functor(startValue);
-    this._endValue = functor(endValue);
-    this._startTime = startTime;
-    this._endTime = Math.max(startTime, endTime);
-    this._ease = ease.linear;
-}
-
-/**
- * Retrieves the tween start time.
- *
- * @return {Number}
- */
-Tween.prototype.startTime = function () {
-    return this._startTime;
-};
-
-/**
- * Retrieves the tween end time.
- *
- * @return {Number}
- */
-Tween.prototype.endTime = function () {
-    return this._endTime;
-};
-
-/**
- * Retrieves the tween start value.
- *
- * @return {Number}
- */
-Tween.prototype.startValue = function () {
-    return this._startValue();
-};
-
-/**
- * Retrieves the tween end value.
- *
- * @return {Number}
- */
-Tween.prototype.endValue = function () {
-    return this._endValue();
-};
-
-/**
- * Sets or retrieves the easing function used by the tween.
- *
- * @return {Number}
- */
-Tween.prototype.ease = function (value) {
-    if (arguments.length === 0) {
-        return this._ease;
-    }
-    if (is.fn(value)) {
-        this._ease = value;
-    } else {
-        this._ease = ease(value);
-    }
-    return this;
-};
-
-/**
- * Retrieves the value at a given point in time.
- *
- * @return {Number}
- */
-Tween.prototype.value = function (t) {
-    var startValue = this.startValue(),
-        endValue = this.endValue(),
-        startTime = this.startTime(),
-        endTime = this.endTime(),
-        delta = endValue - startValue;
-    if (startTime === endTime) {
-        return endValue;
-    }
-    return delta * this._ease(Math.max(0, Math.min(1, (t - startTime) / (endTime - startTime))));
-};
-
-/**
- * Executes the function associated with the tween at a given time.
- * Returns the result of the function. The function is not called if t
- * is before the start time.
- *
- * @return {Object}
- */
-Tween.prototype.update = function (t) {
-    if (this._fn === null || t < this.startTime()) {
-        return null;
-    }
-    return this._fn.call(this, this.value(t));
-};
-
-module.exports = Tween;
 
 });
 

@@ -8,14 +8,18 @@ define([], function () {
         var player = frame.player(),
             model  = frame.model(),
             layout = frame.layout(),
-            nodes = {},
-            clients = {};
+            client = function(id) {
+                return frame.model().clients.find(id);
+            },
+            node = function(id) {
+                return frame.model().nodes.find(id);
+            };
 
         frame.after(1, function() {
             model.clear();
-            nodes.a = model.nodes.create("A");
-            nodes.b = model.nodes.create("B");
-            nodes.c = model.nodes.create("C");
+            model.nodes.create("A");
+            model.nodes.create("B");
+            model.nodes.create("C");
             layout.invalidate();
         })
 
@@ -34,14 +38,14 @@ define([], function () {
 
 
         .after(300, function () {
-            model.zoom([nodes.b]);
+            model.zoom([node(b)]);
             model.subtitle = '<h2>A node can be in 1 of 3 states:</h2>'
                            + model.controls.resume.html();
             layout.invalidate();
             this.after(200, function () { model.controls.resume.show(); })
         })
         .after(300, function () {
-            nodes.b.state = "follower";
+            node(b).state = "follower";
             model.subtitle = '<h2>The <em>Follower</em> state,</h2>'
                            + model.controls.resume.html();
             layout.invalidate();

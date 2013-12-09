@@ -43,10 +43,10 @@
 }
 
 
-.tsld-resume {
+.tsld-btn-group {
   margin-top: 14px;
 }
 
-.tsld-resume:focus {
+.tsld-btn-group .btn:focus {
     outline: none;
 }

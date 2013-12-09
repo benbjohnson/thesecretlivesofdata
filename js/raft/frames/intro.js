@@ -6,141 +6,153 @@
 define([], function () {
     return function (frame) {
         var player = frame.player(),
-            model  = frame.model(),
             layout = frame.layout(),
-            client, node;
+            client = function(id) {
+                return frame.model().clients.find(id);
+            },
+            node = function(id) {
+                return frame.model().nodes.find(id);
+            };
 
         frame.after(1, function() {
-            model.clear();
+            frame.snapshot();
+            frame.model().clear();
             layout.invalidate();
         })
 
         .after(1000, function () {
-            model.title = '<h2 style="visibility:visible">So What is Distributed Consensus?</h2>'
+            frame.model().title = '<h2 style="visibility:visible">So What is Distributed Consensus?</h2>'
                         + '<h3 style="visibility:hidden;">Let\'s start with an example...</h3>'
-                        + '<br/>' + model.controls.resume.html();
+                        + '<br/>' + frame.model().controls.html();
             layout.invalidate();
         })
         .after(1000, function () {
             layout.fadeIn($(".title h3"));
         })
         .after(1000, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
         .after(50, function () {
-            model.title = model.subtitle = "";
+            frame.model().title = frame.model().subtitle = "";
             layout.invalidate();
         })
 
 
         .after(800, function () {
-            model.subtitle = '<h2>Let\'s say we have a single node system</h2>'
-                           + model.controls.resume.html();
+            frame.snapshot();
+            frame.model().subtitle = '<h2>Let\'s say we have a single node system</h2>'
+                           + frame.model().controls.html();
             layout.invalidate();
         })
         .after(500, function () {
-            node = model.nodes.create("A");
+            frame.model().nodes.create("A");
             layout.invalidate();
         })
         .after(200, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
 
 
         .after(100, function () {
-            model.subtitle = "";
-            model.zoom([node]);
+            frame.snapshot();
+            frame.model().subtitle = "";
+            frame.model().zoom([node("A")]);
             layout.invalidate();
         })
         .after(600, function () {
-            model.subtitle = '<h3>For this example, you can think of our <span style="color:steelblue">node</span> as a database server that stores a single value.</h3>'
-                           + model.controls.resume.html();
+            frame.model().subtitle = '<h3>For this example, you can think of our <span style="color:steelblue">node</span> as a database server that stores a single value.</h3>'
+                           + frame.model().controls.html();
             layout.invalidate();
         })
         .after(1000, function () {
-            node.value = "x";
+            node("A").value = "x";
             layout.invalidate();
         })
         .after(100, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
         
 
         .after(100, function () {
-            model.subtitle = "";
-            model.zoom(null);
+            frame.snapshot();
+            frame.model().subtitle = "";
+            frame.model().zoom(null);
             layout.invalidate();
         })
         .after(1000, function () {
-            model.subtitle = '<h3>We also have a <span style="color:green">client</span> that can send a value to the server.</h3>'
-                           + model.controls.resume.html();
+            frame.model().subtitle = '<h3>We also have a <span style="color:green">client</span> that can send a value to the server.</h3>'
+                           + frame.model().controls.html();
             layout.invalidate();
         })
         .after(500, function () {
-            client = model.clients.create("X");
+            frame.model().clients.create("X");
             layout.invalidate();
         })
         .after(500, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
 
 
         .after(100, function () {
-            model.subtitle += "";
-            client.value = "8";
+            frame.snapshot();
+            frame.model().subtitle += "";
+            client("X").value = "8";
             layout.invalidate();
         })
         .after(1000, function () {
-            model.send(client, node, 1000);
+            frame.model().send(client("X"), node("A"), 1000);
             layout.invalidate();
         })
         .after(1000, function () {
-            node.value = "8";
+            node("A").value = "8";
             layout.invalidate();
         })
         .after(100, function () {
-            model.subtitle = '<h3>Coming to agreement on that value, or <em>consensus</em>, is easy with one node.</h3>'
-                           + model.controls.resume.html();
+            frame.model().subtitle = '<h3>Coming to agreement on that value, or <em>consensus</em>, is easy with one node.</h3>'
+                           + frame.model().controls.html();
             layout.invalidate();
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
 
 
         .after(100, function () {
-            model.subtitle = '<h3>But how do we come to consensus if we have multiple nodes?</h3>'
-                           + model.controls.resume.html();
-            layout.invalidate();
-        })
-        .after(500, function () {
-            model.nodes.create("B");
+            frame.snapshot();
+            frame.model().subtitle = '<h3>But how do we come to consensus if we have multiple nodes?</h3>'
+                           + frame.model().controls.html();
             layout.invalidate();
         })
         .after(500, function () {
-            model.nodes.create("C");
+            frame.model().nodes.create("B");
+            layout.invalidate();
+        })
+        .after(500, function () {
+            frame.model().nodes.create("C");
             layout.invalidate();
         })
         .after(100, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
 
 
         .after(100, function () {
-            model.subtitle = '<h3>That\'s the problem of <em>distributed consensus</em>.</h3>'
-                           + model.controls.resume.html();
+            frame.snapshot();
+            frame.model().subtitle = '<h3>That\'s the problem of <em>distributed consensus</em>.</h3>'
+                           + frame.model().controls.html();
             layout.invalidate();
         })
         .after(100, function () {
-            model.controls.resume.show();
+            frame.model().controls.show();
         })
 
 
         .after(100, function () {
+            frame.snapshot();
             player.next();
         })
 
 
         frame.addEventListener("end", function () {
-            model.title = model.subtitle = "";
+            frame.model().title = frame.model().subtitle = "";
             layout.invalidate();
         });
 

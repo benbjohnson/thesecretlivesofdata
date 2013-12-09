@@ -8,19 +8,35 @@ define([], function () {
         var self = this;
         this.model = model;
 
-        this.resume = {
+        this.show = function() {
+            self.model.player().pause();
+            self.rollback.show();
+            self.resume.show();
+        };
+
+        this.html = function() {
+            return '<div class="btn-group tsld-btn-group">'
+                 + (model.player().current().rollbackable(2) ? self.rollback.html() : "") + self.resume.html()
+                 + '</div>';
+        };
+
+        this.rollback = {
             show: function() {
-                self.model.player().pause();
-                $(".tsld-resume").css('visibility','visible').hide().fadeIn(600);
+                $(".tsld-rollback").css('visibility','visible').hide().fadeIn(600);
             },
             html: function() {
-                return '<button type="button" style="visibility:hidden" class="btn btn-default tsld-resume">Continue <span class="glyphicon glyphicon-chevron-right"></span></button>';
+                return '<button type="button" style="visibility:hidden" class="btn btn-default tsld-rollback" alt="Replay previous frame"><span class="glyphicon glyphicon-repeat"></span></button>';
             },
         };
 
-        $(document).on("click", ".tsld-resume", function() {
-            self.model.player().play();
-        });
+        this.resume = {
+            show: function() {
+                $(".tsld-resume").css('visibility','visible').hide().fadeIn(600);
+            },
+            html: function() {
+                return '<button type="button" style="visibility:hidden" class="btn btn-default tsld-resume" alt="Continue to next frame">Continue <span class="glyphicon glyphicon-chevron-right"></span></button>';
+            },
+        };
     }
 
     return Controls;

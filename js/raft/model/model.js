@@ -98,11 +98,17 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
      */
     Model.prototype.clone = function () {
         var i, clone = new Model();
+        clone._player = this._player;
         clone.title = this.title;
         clone.subtitle = this.subtitle;
         clone.nodes = this.nodes.clone();
         clone.clients = this.clients.clone();
         clone.messages = this.messages.clone();
+        clone.bbox = this.bbox;
+        clone.domains = {
+            x: this.domains.x,
+            y: this.domains.y,
+        };
         return clone;
     };
 

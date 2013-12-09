@@ -46,6 +46,8 @@ define([], function () {
 
         this.layout(x, y, w, h);
 
+        console.log(nodes);
+
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; },
@@ -126,10 +128,6 @@ define([], function () {
                 g = this.exit()
                     .each(function(d) { this.__data__.g = null });
                 g.select("text").remove();
-                g = g.transition().duration(500)
-                g.select("circle")
-                    .style("stroke-opacity", 0)
-                    .style("fill-opacity", 0);
                 g.remove();
             });
     };
