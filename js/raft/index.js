@@ -42,6 +42,19 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
         player.layout().messages.invalidate();
     });
 
+    $(doc).keydown(function(e) {
+        var button;
+        if (e.keyCode == 37) { // LEFT
+            button = $(".tsld-rollback");
+        } else if (e.keyCode == 39) { // RIGHT
+            button = $(".tsld-resume");
+        }
+
+        if (button && parseInt(button.css("opacity")) > 0) {
+            button.click();
+        }
+    });
+
     // Update frame index display on change.
     player.addEventListener("framechange", function () {
         $("#currentIndex").text(player.currentIndex() + 1);
