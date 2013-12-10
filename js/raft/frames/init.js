@@ -7,8 +7,8 @@ define(["./playground", "./title", "./intro", "./overview"],
     function (playground, title, intro, overview) {
         return function (player) {
             //player.frame(playground);
-            player.frame(title);
-            player.frame(intro);
-            player.frame(overview);
+            player.frame("home", "Home", title);
+            player.frame("intro", "What is Distributed Consensus?", intro);
+            player.frame("overview", "Protocol Overview", overview);
         };
     });

@@ -737,12 +737,14 @@ var EventDispatcher = require('./event_dispatcher'),
 /**
  * Initializes a new Frame instance.
  */
-function Frame(fn) {
+function Frame(id, title, fn) {
     EventDispatcher.call(this);
 
     if (!is.fn(fn)) {
         throw "Frame function required";
     }
+    this._id = id;
+    this._title = title;
     this._fn = fn;
     this._player = null;
     this._playhead = 0;
@@ -754,6 +756,24 @@ function Frame(fn) {
 
 Frame.prototype = new EventDispatcher();
 Frame.prototype.constructor = Frame;
+
+/**
+ * Returns the frame identifier.
+ *
+ * @return {String}
+ */
+Frame.prototype.id = function () {
+    return this._id;
+};
+
+/**
+ * Returns the frame title.
+ *
+ * @return {String}
+ */
+Frame.prototype.title = function () {
+    return this._title;
+};
 
 /**
  * Initializes the frame by reseting the playhead to zero and executing
@@ -1289,28 +1309,43 @@ Player.prototype.playing = function () {
 /**
  * Appends a new frame to the player.
  *
+ * @param {String|Number}
+ * @param {String}
+ * @param {Function}
  * @return {Player}
  */
-Player.prototype.frame = function (value) {
-    var frame;
-    if (is.number(value)) {
-        if (value >= 0 && value < this._frames.length) {
-            return this._frames[value];
+Player.prototype.frame = function (id, title, fn) {
+    var i, frame;
+    if (arguments.length === 0) {
+        throw new Error("Expected 1 or 3 arguments");
+    }
+
+    if (arguments.length === 1) {
+        // Look up by index.
+        if (is.number(id)) {
+            if (id >= 0 && id < this._frames.length) {
+                return this._frames[id];
+            }
+            return null;
+        }
+
+        // Look up by id.
+        for (i = 0; i < this._frames.length; i += 1) {
+            if (id === this._frames[i].id()) {
+                return this._frames[i];
+            }
         }
         return null;
     }
 
-    if (is.fn(value)) {
-        frame = new Frame(value);
-        frame.player(this);
-        this._frames.push(frame);
-        if (this.current() === null) {
-            this.currentIndex(0);
-        }
-        return this;
+    // Create new frame.
+    frame = new Frame(id, title, fn);
+    frame.player(this);
+    this._frames.push(frame);
+    if (this.current() === null) {
+        this.currentIndex(0);
     }
-
-    throw "Player.frame() invalid argument: " + value;
+    return this;
 };
 
 /**

@@ -84,7 +84,7 @@ define([], function () {
             self = this,
             pct = 0.4,
             viewportHeight = $(window).height() - this.padding.top - this.padding.bottom,
-            paddingTop = (this.padding.top + (viewportHeight * pct)),
+            top = (this.padding.top + (viewportHeight * pct)),
             title = this.model().title,
             html = '<div class="title">' + title + '</div>';
 
@@ -111,7 +111,7 @@ define([], function () {
         }
 
         var title = this.title.select(".title");
-        title.style("padding-top", (paddingTop - ($(title[0][0]).height() / 2)) + "px");
+        title.style("top", (top - ($(title[0][0]).height() / 2)) + "px");
     };
 
     /**

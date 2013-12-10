@@ -1,3 +1,15 @@
+nav {
+  z-index: 1000;
+}
+
+.navbar-header {
+  float: none !important;
+}
+
+.navbar-toggle {
+  display: block !important;
+}
+
 .title-container {
   position: fixed;
   top: 0;
