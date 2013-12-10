@@ -5,7 +5,7 @@
 
 define([], function () {
     var ANGLE = {2: 90, 3: 150, 5: 50},
-        ENTRY = {x: 3, y: 4, w:8, h:4},
+        ENTRY = {x: 5, y: 5, w:15, h:4},
         RADIUS = 5;
 
     function NodeLayout(parent) {
@@ -45,8 +45,6 @@ define([], function () {
             nodes = this.nodes();
 
         this.layout(x, y, w, h);
-
-        console.log(nodes);
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
@@ -89,10 +87,10 @@ define([], function () {
                 g.each(function(node) {
                     d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log.entries)
                         .call(function() {
-                            var transform = function(d) { return "translate(" + self.parent().scales.w(d.dx) + "," + self.parent().scales.h(d.dy) + ")"};
+                            var transform = function(d) { return "translate(" + self.parent().scales.size(d.dx) + "," + self.parent().scales.size(d.dy) + ")"};
                             var text = {
-                                x: function(d) { return self.parent().scales.w(0.25); },
-                                y: function(d) { return (self.parent().scales.h(d.h) / 2) + 2; },
+                                x: function(d) { return self.parent().scales.size(0.25); },
+                                y: function(d) { return (self.parent().scales.size(d.h) / 2) + 2; },
                                 fill: function(d) { return (d.index <= node.log.commitIndex ? "black" : "red"); },
                             };
                             var g = this.enter().append("g").attr("class", "log-entry");
@@ -111,13 +109,13 @@ define([], function () {
                             g = this.transition().duration(500)
                                 .attr("transform", transform);
                             g.select("rect")
-                                .attr("width", function(d) { return self.parent().scales.w(d.w)})
-                                .attr("height", function(d) { return self.parent().scales.h(d.h)})
+                                .attr("width", function(d) { return self.parent().scales.size(d.w)})
+                                .attr("height", function(d) { return self.parent().scales.size(d.h)})
                             g.select("text")
                                 .attr("x", text.x)
                                 .attr("y", text.y)
                                 .attr("fill", text.fill)
-                                .attr("font-size", function(d) { return self.parent().scales.font(8) + "px"})
+                                .attr("font-size", function(d) { return self.parent().scales.font(10) + "px"})
                                 .text(function (d) { return d.command; })
                                 ;
 

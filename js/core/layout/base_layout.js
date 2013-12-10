@@ -37,6 +37,7 @@ define([], function () {
             h: d3.scale.linear(),
             r: function(v) { return Math.min(self.scales.w(v), self.scales.h(v)); },
             font: function(v) { return Math.min(self.scales.font.x(v), self.scales.font.y(v)); },
+            size: function(v) { return Math.min(self.scales.w(v), self.scales.h(v)); },
         };
         this.scales.font.x = d3.scale.linear();
         this.scales.font.y = d3.scale.linear();
@@ -68,7 +69,7 @@ define([], function () {
             this.scales.y.domain(model.domains.y).range([0, viewport.height]);
             this.scales.w.domain([0, model.domains.x[1] - model.domains.x[0]]).range([0, viewport.width]);
             this.scales.h.domain([0, model.domains.y[1] - model.domains.y[0]]).range([0, viewport.height]);
-            this.scales.font.x.domain([0, 100 * zoom.x]).range([0, viewport.width * 0.17]);
+            this.scales.font.x.domain([0, 100 * zoom.x]).range([0, viewport.width * 0.35]);
             this.scales.font.y.domain([0, 100 * zoom.y]).range([0, viewport.height * 0.4]);
 
             this.invalidateTitle();

@@ -42,6 +42,7 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
         player.layout().messages.invalidate();
     });
 
+    // Left and right arrow click handlers.
     $(doc).keydown(function(e) {
         var button;
         if (e.keyCode == 37) { // LEFT
