@@ -42,6 +42,7 @@ define([], function () {
 
     NodeLayout.prototype.invalidate = function (x, y, w, h) {
         var self = this,
+            model = this.parent().model(),
             nodes = this.nodes();
 
         this.layout(x, y, w, h);
@@ -64,6 +65,9 @@ define([], function () {
                     .style("stroke-dasharray", stroke.dash)
                     .style("stroke-opacity", stroke.opacity)
                     .style("fill", "steelblue");
+                g.append("path")
+                    .attr("class", "election-timeout")
+                    .attr("fill", "white");
                 g.append("text")
                     .attr("class", "node-value")
                     .attr("y", "2")
@@ -128,10 +132,37 @@ define([], function () {
                 g.select("text").remove();
                 g.remove();
             });
+
+        this.invalidateElectionTimers();
+    };
+
+    NodeLayout.prototype.invalidateElectionTimers = function () {
+        var self = this,
+            model = this.parent().model(),
+            nodes = this.nodes();
+
+        this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
+            .call(function () {
+                this.select("path.election-timeout")
+                    .attr("d", function(d) {
+                        var r = (!isNaN(d.r) ? d.r : 0);
+                        var pct = 0.0;
+                        if (d.electionAt > 0 && d.electionTimeout > 0) {
+                            pct = 1.0 - Math.min(1, Math.max(0, ((d.electionAt - model.playhead()) / d.electionTimeout)));
+                        }
+                        return d3.svg.arc()
+                            .innerRadius(self.parent().scales.r(r - 1))
+                            .outerRadius(self.parent().scales.r(r) + 1)
+                            .startAngle(0)
+                            .endAngle((2 * Math.PI) * pct)
+                            .call(d);
+                    });
+            });
     };
 
     NodeLayout.prototype.layout = function (x, y, w, h) {
         var i, j, node, entry, step, 
+            model = this.parent().model(),
             nodes = this.nodes(),
             angle = ANGLE[nodes.length];
 

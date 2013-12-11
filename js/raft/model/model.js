@@ -4,13 +4,25 @@
 /*global define, playback*/
 
 define(["./controls", "./client", "./message", "./node", "./bbox"], function (Controls, Client, Message, Node, BBox) {
+    var DEFAULT_SIMULATION_RATE   = (1/20),
+        DEFAULT_NETWORK_LATENCY   = 20 / DEFAULT_SIMULATION_RATE,
+        DEFAULT_HEARTBEAT_TIMEOUT = 50 / DEFAULT_SIMULATION_RATE,
+        DEFAULT_ELECTION_TIMEOUT  = 150 / DEFAULT_SIMULATION_RATE;
+
     function Model() {
         this.title = "";
         this.subtitle = "";
+        this.defaultSimulationRate = DEFAULT_SIMULATION_RATE;
+        this.defaultHeartbeatTimeout = DEFAULT_HEARTBEAT_TIMEOUT;
+        this.defaultElectionTimeout = DEFAULT_ELECTION_TIMEOUT;
+        this.simulationRate = this.defaultSimulationRate;
+        this.heartbeatTimeout = this.defaultHeartbeatTimeout;
+        this.electionTimeout = null;
         this.controls = new Controls(this);
         this.nodes = playback.set(Node);
         this.clients = playback.set(Client);
         this.messages = playback.set(Message);
+        this.latencies = {};
         this.bbox = new BBox(0, 100, 100, 0);
         this.domains = {
             x: [0, 100],
@@ -91,13 +103,42 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
         this.nodes.removeAll();
         this.clients.removeAll();
         this.messages.removeAll();
+        this.latencies = {};
+    };
+
+    /**
+     * Retrieves the latency between two node ids.
+     */
+    Model.prototype.latency = function (a, b, latency) {
+        var ret,
+            x = (a < b ? a : b),
+            y = (a < b ? b : a),
+            key = [a, b].join("|");
+        if (arguments.length === 2) {
+            ret = this.latencies[key];
+            return (ret !== undefined ? ret : DEFAULT_NETWORK_LATENCY);
+        }
+        this.latencies[key] = latency;
+        return this;
+    };
+
+    /**
+     * Runs a simulation.
+     */
+    Model.prototype.simulate = function () {
+        var i,
+            timers = [],
+            nodes = this.nodes.toArray();
+        for (i = 0; i < nodes.length; i += 1) {
+            timers.push(nodes[i].simulate(this));
+        }
     };
 
     /**
      * Clones the model.
      */
     Model.prototype.clone = function () {
-        var i, clone = new Model();
+        var i, key, clone = new Model();
         clone._player = this._player;
         clone.title = this.title;
         clone.subtitle = this.subtitle;
@@ -109,6 +150,9 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
             x: this.domains.x,
             y: this.domains.y,
         };
+        for(key in this.latencies) {
+            clone.latencies[key] = this.latencies[key];
+        }
         return clone;
     };
 

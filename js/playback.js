@@ -1126,6 +1126,15 @@ Model.prototype.player = function (value) {
 };
 
 /**
+ * Retrieves the current frame.
+ *
+ * @return {Frame}
+ */
+Model.prototype.frame = function () {
+    return (this.player() !== null ? this.player().current() : null);
+};
+
+/**
  * Retrieves the playhead of the current frame.
  *
  * @return {Number}
@@ -1856,6 +1865,8 @@ Timer.prototype.constructor = Timer;
 
 Timer.nextid = 1;
 
+Timer.MAX = 9007199254740992;
+
 /**
  * Retrieves the timer identifier.
  *
@@ -1949,6 +1960,14 @@ Timer.prototype.duration = function (value) {
 };
 
 /**
+ * Marks a timer as existing indefinitely by setting its interval to -1.
+ */
+Timer.prototype.indefinite = function () {
+    this._interval = -1;
+    return this;
+};
+
+/**
  * Creates a timer after this timer ends.
  *
  * @param {Function}
@@ -2038,9 +2057,10 @@ Timer.prototype.until = function (t) {
         offset    = t - startTime;
 
     // POSSIBLE TIMERS:
-    // - Single use:   startTime only
-    // - Neverending:  startTime + interval
-    // - Fixed length: startTime + interval + duration
+    // - Single use:      startTime only
+    // - Unending Single: startTime + (interval == -1)
+    // - Neverending:     startTime + interval
+    // - Fixed length:    startTime + interval + duration
     if (!this.running()) {
         return null;
     }
@@ -2049,6 +2069,9 @@ Timer.prototype.until = function (t) {
     }
     if (t <= startTime) {
         return startTime;
+    }
+    if (interval === -1) {
+        return Timer.MAX;
     }
     if (interval === undefined) {
         return null;

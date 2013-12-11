@@ -21,14 +21,12 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
 
     // Handle "continue" button click.
     $(doc).on("click", ".tsld-resume", function() {
-        player.play();
+        player.current().model().controls.resume.click();
     });
 
     // Handle "replay" button click.
     $(doc).on("click", ".tsld-rollback", function() {
-        player.current().rollback(2);
-        player.layout().invalidate();
-        player.play();
+        player.current().model().controls.rollback.click();
     });
 
     // Handle "hashchange" event.
@@ -40,6 +38,7 @@ define(["./model/model", "./layout/layout", "./frames/init", "../domReady!"], fu
     player.addEventListener("tick", function () {
         player.current().model().tick(player.current().playhead());
         player.layout().messages.invalidate();
+        player.layout().nodes.invalidateElectionTimers();
     });
 
     // Left and right arrow click handlers.
