@@ -8,6 +8,9 @@ define(["./bbox"], function (BBox) {
         this.id = id;
     }
 
+    Client.prototype = playback.dataObject();
+    Client.prototype.constructor = Client;
+
     /**
      * Determines the bounding box of the client.
      */

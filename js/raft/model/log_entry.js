@@ -10,6 +10,9 @@ define(["./bbox"], function (BBox) {
         this.command = command;
     }
 
+    LogEntry.prototype = playback.dataObject();
+    LogEntry.prototype.constructor = LogEntry;
+
     /**
      * Determines the bounding box of the log entry.
      */

@@ -16,6 +16,9 @@ define(["./bbox"], function (BBox) {
         this.text = "";
     }
 
+    Message.prototype = playback.dataObject();
+    Message.prototype.constructor = Message;
+
     /**
      * Determines the bounding box of the message.
      */

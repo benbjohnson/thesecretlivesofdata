@@ -10,6 +10,21 @@ define(["./log_entry", "./bbox"], function (LogEntry, BBox) {
         this.entries = [];
     }
 
+    Log.prototype = playback.dataObject();
+    Log.prototype.constructor = Log;
+
+    /**
+     * Sets or retrieves the model.
+     */
+    Log.prototype.model = function (value) {
+        if (arguments.length === 0) {
+            return this._model;
+        }
+        this._model = value;
+        this.entries.forEach(function(item) { item.model(value) });
+        return this;
+    };
+
     /**
      * Appends a log entry to the log.
      *

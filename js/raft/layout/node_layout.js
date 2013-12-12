@@ -50,9 +50,10 @@ define([], function () {
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; },
+                    fill = function (d) { return d.state === "stopped" ? "gray" : "steelblue"; },
                     stroke = {
                         dash: function (d) { return (d.state === "candidate" ? "5,5" : ""); },
-                        opacity: function (d) { return (d.state === "follower" ? 0 : 1); },
+                        opacity: function (d) { return (d.state === "follower" || d.state === "stopped" ? 0 : 1); },
                     };
 
                 var g = this.enter().append("g")
@@ -64,7 +65,7 @@ define([], function () {
                     .style("stroke-width", 5)
                     .style("stroke-dasharray", stroke.dash)
                     .style("stroke-opacity", stroke.opacity)
-                    .style("fill", "steelblue");
+                    .style("fill", fill);
                 g.append("path")
                     .attr("class", "election-timeout")
                     .attr("fill", "white");
@@ -83,7 +84,8 @@ define([], function () {
                 g.select("circle")
                     .attr("r", function (d) { return self.parent().scales.r(d.r); })
                     .style("stroke-dasharray", stroke.dash)
-                    .style("stroke-opacity", stroke.opacity);
+                    .style("stroke-opacity", stroke.opacity)
+                    .style("fill", fill);
                 g.select("text.node-value")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
                     .text(function (d) { return d.value; });

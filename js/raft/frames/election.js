@@ -66,6 +66,30 @@ define([], function () {
             layout.invalidate();
         })
         .after(200, wait).indefinite()
+        .after(100, function () {
+            model().subtitle = '<h2>The election timeout is typically between 10ms and 500ms.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(200, wait).indefinite()
+        .after(100, function () {
+            node("b").state = "stopped";
+            node("b").simulate();
+            model().subtitle = '<h2>If a follower hears no heartbeats within an election timeout then it will become a <strong>candidate</strong>.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(model().heartbeatTimeout + 100, function () {
+            var electionAt = model().nextElectionAt();
+            this.after(electionAt - frame.playhead(), function () {
+                model().subtitle = '<h2>When a node becomes a candidate it will request votes from other nodes.</h2>'
+                               + model().controls.html();
+                model().controls.show();
+            });
+        })
+        .after(model().electionTimeout * 2, function () {
+
+        })
 
         player.play();
     };

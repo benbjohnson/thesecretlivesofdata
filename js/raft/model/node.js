@@ -1,7 +1,7 @@
 
 "use strict";
 /*jslint browser: true, nomen: true*/
-/*global define, d3*/
+/*global define, d3, playback*/
 
 define(["./log", "./bbox"], function (Log, BBox) {
     function Node(id) {
@@ -13,6 +13,21 @@ define(["./log", "./bbox"], function (Log, BBox) {
         this.electionTimeout = null;
         this.log = new Log();
     }
+
+    Node.prototype = playback.dataObject();
+    Node.prototype.constructor = Node;
+
+    /**
+     * Sets or retrieves the model.
+     */
+    Node.prototype.model = function (value) {
+        if (arguments.length === 0) {
+            return this._model;
+        }
+        this._model = value;
+        this.log.model(value);
+        return this;
+    };
 
     /**
      * Determines the bounding box of the node and its log.
@@ -26,52 +41,70 @@ define(["./log", "./bbox"], function (Log, BBox) {
     /**
      * Runs a simulation.
      */
-    Node.prototype.simulate = function (model) {
+    Node.prototype.simulate = function () {
+        this.frame().clearTimer(this.timerId);
+        this.timerId = 0;
+
         switch (this.state) {
         case "leader":
-            this.simulateLeader(model);
+            this.simulateLeader();
             break;
         case "candidate":
-            this.simulateCandidate(model);
+            this.simulateCandidate();
             break;
         case "follower":
-            this.simulateFollower(model);
+            this.simulateFollower();
+            break;
+        case "stopped":
             break;
         default:
             throw new Error("Invalid node state: " + this.state);
         }
     };
 
-    Node.prototype.simulateLeader = function (model) {
+    Node.prototype.simulateLeader = function () {
         var self = this,
-            frame = model.frame();
+            frame = this.frame();
+
         // Send heartbeats to followers.
-        var timer = frame.timer(function() {
-            var i, node, nodes = model.nodes.toArray();
-            for (i = 0; i < nodes.length; i += 1) {
-                self.sendHeartbeatTo(model, nodes[i]);
-            }
-        }).interval(model.heartbeatTimeout).delay(model.heartbeatTimeout);
-        this.timerId = timer.id();
-    };
-
-    Node.prototype.sendHeartbeatTo = function (model, node) {
-        var frame = model.frame();
-
-        if (node.id !== this.id) {
-            var latency = model.latency(this.id, node.id);
-            model.send(this, node, latency);
-            frame.after(latency, function() {
-                node.electionTimeout = (model.electionTimeout * (1 + Math.random()));
-                node.electionAt = frame.playhead() + node.electionTimeout;
+        this.timerId = frame.timer(function() {
+            self.model().nodes.toArray().forEach(function(node) {
+                if (node.id !== this.id) {
+                    self.sendAppendEntriesRequest(node);
+                }
             });
-        }
+        }).interval(this.model().heartbeatTimeout).delay(this.model().heartbeatTimeout).id();
     };
 
-    Node.prototype.simulateCandidate = function (model) {
+    Node.prototype.simulateCandidate = function () {
     };
 
-    Node.prototype.simulateFollower = function (model) {
+    Node.prototype.simulateFollower = function () {
+    };
+
+
+    Node.prototype.sendAppendEntriesRequest = function (node) {
+        var self  = this,
+            frame = this.frame(),
+            term         = this.log.term,
+            leaderId     = this.id,
+            prevLogIndex = 0,
+            prevLogTerm  = 0,
+            entries      = this.log.entries.slice(),
+            leaderCommit = this.log.commitIndex;
+
+        this.model().send(this, node, latency, function() {
+            node.recvAppendEntries(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit);
+        });
+    };
+
+    Node.prototype.recvAppendEntriesRequest = function (term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit) {
+        var self  = this,
+            frame = this.frame();
+
+        // Reset the next election for this node.
+        this.electionTimeout = (this.model().electionTimeout * (1 + Math.random()));
+        this.electionAt = frame.playhead() + this.electionTimeout;
     };
 
     /**

@@ -631,14 +631,56 @@ ease.linear = linear;
 module.exports = ease;
 
 });
-require.register("playback/lib/index.js", function(exports, require, module){
+require.register("playback/lib/data_object.js", function(exports, require, module){
 
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var Playback = require('./playback');
+var EventDispatcher = require('./event_dispatcher');
 
-module.exports = new Playback();
+/**
+ * Initializes a new DataObject instance.
+ */
+function DataObject() {
+    this._model = null;
+}
+
+DataObject.prototype = new EventDispatcher();
+DataObject.prototype.constructor = DataObject;
+
+/**
+ * Sets or retrieves the model that the data object belongs to.
+ *
+ * @return {DataObject|Model}
+ */
+DataObject.prototype.model = function (value) {
+    if (arguments.length === 0) {
+        return this._model;
+    }
+    this._model = value;
+    return this;
+};
+
+/**
+ * Retrieves the player.
+ *
+ * @return {Player}
+ */
+DataObject.prototype.player = function () {
+    return (this._model !== null ? this._model.player() : null);
+};
+
+
+/**
+ * Retrieves the current frame.
+ *
+ * @return {Frame}
+ */
+DataObject.prototype.frame = function () {
+    return (this._model !== null ? this._model.frame() : null);
+};
+
+module.exports = DataObject;
 
 });
 require.register("playback/lib/event.js", function(exports, require, module){
@@ -921,6 +963,18 @@ Frame.prototype.timers = function () {
 };
 
 /**
+ * Stops a timer with the given identifier.
+ */
+Frame.prototype.clearTimer = function (value) {
+    var i;
+    for (i = 0; i < this._timers.length; i += 1) {
+        if (this._timers[i] === value || this._timers[i].id() === value) {
+            this._timers[i].stop();
+        }
+    }
+};
+
+/**
  * Sets or retrieves the initial frame data model.
  *
  * @return {Frame|Object}
@@ -1020,6 +1074,16 @@ function functor(v) {
 
 module.exports = functor;
 
+
+});
+require.register("playback/lib/index.js", function(exports, require, module){
+
+"use strict";
+/*jslint browser: true, nomen: true*/
+
+var Playback = require('./playback');
+
+module.exports = new Playback();
 
 });
 require.register("playback/lib/layout.js", function(exports, require, module){
@@ -1161,9 +1225,10 @@ require.register("playback/lib/playback.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var Player = require('./player'),
+var DataObject = require('./data_object'),
     Layout = require('./layout'),
     Model  = require('./model'),
+    Player = require('./player'),
     Set    = require('./set');
 
 /**
@@ -1184,6 +1249,13 @@ Playback.prototype.player = function () {
  */
 Playback.prototype.layout = function () {
     return new Layout();
+};
+
+/**
+ * Retrieves the data object superclass.
+ */
+Playback.prototype.dataObject = function () {
+    return new DataObject();
 };
 
 /**
@@ -1651,23 +1723,39 @@ require.register("playback/lib/set.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-var EventDispatcher = require('./event_dispatcher'),
-    Event           = require('./event'),
-    is              = require('is');
+var DataObject = require('./data_object'),
+    Event      = require('./event'),
+    is         = require('is');
 
 /**
  * A Set is a collection of unique objects where uniqueness is
  * determined by the "id" property.
  */
 function Set(clazz) {
-    EventDispatcher.call(this);
+    DataObject.call(this);
     this.clazz(clazz);
     this._elements = [];
 }
 
-Set.prototype = new EventDispatcher();
+Set.prototype = new DataObject();
 Set.prototype.constructor = Set;
 
+
+/**
+ * Sets or retrieves the model that the data object belongs to.
+ *
+ * @return {DataObject|Model}
+ */
+Set.prototype.model = function (value) {
+    if (arguments.length === 0) {
+        return this._model;
+    }
+    this._model = value;
+    this._elements.forEach(function (element) {
+        element.model(value);
+    });
+    return this;
+};
 
 /**
  * Sets or retrieves the item class used for instantitation.
@@ -1705,6 +1793,7 @@ Set.prototype.create = function (id) {
 
     // Otherwise create a new element and add it.
     element = (new this._clazz(id));
+    element.model(this.model());
     this.add(element);
     return element;
 };
@@ -1825,7 +1914,9 @@ Set.prototype.empty = function () {
  * @return {Set}
  */
 Set.prototype.clone = function () {
-    var i, clone = new Set();
+    var i,
+        self = this,
+        clone = new Set();
     clone._clazz = this._clazz;
     clone._elements = this._elements.map(function (element) { return element.clone(); });
     return clone;

@@ -19,9 +19,9 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
         this.heartbeatTimeout = this.defaultHeartbeatTimeout;
         this.electionTimeout = null;
         this.controls = new Controls(this);
-        this.nodes = playback.set(Node);
-        this.clients = playback.set(Client);
-        this.messages = playback.set(Message);
+        this.nodes = playback.set(Node).model(this);
+        this.clients = playback.set(Client).model(this);
+        this.messages = playback.set(Message).model(this);
         this.latencies = {};
         this.bbox = new BBox(0, 100, 100, 0);
         this.domains = {
@@ -57,16 +57,26 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
     };
 
     /**
-     * Sends a message between two nodes.
+     * Sends a message between two nodes if latency is greater than zero.
      *
      * @return {Message}
      */
-    Model.prototype.send = function (source, target, duration) {
-        var message = this.messages.create();
+    Model.prototype.send = function (source, target, duration, callback) {
+        var message,
+            latency = this.model().latency(message.source, message.target);
+
+        if (!(latency > 0)) {
+            return null;
+        }
+
+        message = this.messages.create();
         message.source = (typeof(source) == "string" ? source : source.id);
         message.target = (typeof(target) == "string" ? target : target.id);
         message.sendTime = this.playhead();
         message.recvTime = message.sendTime + duration;
+
+        frame().after(latency, callback);
+
         return message;
     };
 
@@ -123,6 +133,19 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
     };
 
     /**
+     * Retrieves the playhead for the next election.
+     */
+    Model.prototype.nextElectionAt = function () {
+        var playhead = null;
+        this.nodes.toArray().forEach(function(node) {
+            if (playhead === null || node.electionAt < playhead) {
+                playhead = node.electionAt;
+            }
+        })
+        return playhead;
+    };
+
+    /**
      * Runs a simulation.
      */
     Model.prototype.simulate = function () {
@@ -142,9 +165,9 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
         clone._player = this._player;
         clone.title = this.title;
         clone.subtitle = this.subtitle;
-        clone.nodes = this.nodes.clone();
-        clone.clients = this.clients.clone();
-        clone.messages = this.messages.clone();
+        clone.nodes = this.nodes.clone().model(clone);
+        clone.clients = this.clients.clone().model(clone);
+        clone.messages = this.messages.clone().model(clone);
         clone.bbox = this.bbox;
         clone.domains = {
             x: this.domains.x,
