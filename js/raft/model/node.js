@@ -3,15 +3,19 @@
 /*jslint browser: true, nomen: true*/
 /*global define, d3, playback*/
 
-define(["./log", "./bbox"], function (Log, BBox) {
+define(["./bbox"], function (BBox) {
     function Node(id) {
         this.id = id;
-        this.state = "follower";
-        this.value = "";
-        this.timerId = 0;
-        this.electionAt = null;
-        this.electionTimeout = null;
-        this.log = new Log();
+        this._state = "follower";
+        this._value = "";
+        this._currentTerm = 0;
+        this._votedFor = null;
+        this._commitIndex = 0;
+        this._lastApplied = 0;
+        this._nextIndex = {};
+        this._matchIndex = {};
+        this._timer = null;
+        this._log = [];
     }
 
     Node.prototype = playback.dataObject();
@@ -25,7 +29,7 @@ define(["./log", "./bbox"], function (Log, BBox) {
             return this._model;
         }
         this._model = value;
-        this.log.model(value);
+        this._log.forEach(function(entry) { entry.model(value) });
         return this;
     };
 
@@ -34,77 +38,223 @@ define(["./log", "./bbox"], function (Log, BBox) {
      */
     Node.prototype.bbox = function () {
         var bbox = new BBox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
-        bbox = bbox.union(this.log.bbox());
+        bbox = bbox.union(this.logbbox());
         return bbox;
     };
 
-    /**
-     * Runs a simulation.
-     */
-    Node.prototype.simulate = function () {
-        this.frame().clearTimer(this.timerId);
-        this.timerId = 0;
-
-        switch (this.state) {
-        case "leader":
-            this.simulateLeader();
-            break;
-        case "candidate":
-            this.simulateCandidate();
-            break;
-        case "follower":
-            this.simulateFollower();
-            break;
-        case "stopped":
-            break;
-        default:
-            throw new Error("Invalid node state: " + this.state);
+    Node.prototype.logbbox = function () {
+        var i, bbox;
+        if (this._log.length === 0) {
+            return null;
         }
+        bbox = this._log[0].bbox();
+        for (i = 1; i < this._log.length; i += 1) {
+            bbox = this._log[i].bbox();
+        }
+        return bbox;
     };
 
-    Node.prototype.simulateLeader = function () {
+
+    /**
+     * Retrieve the current node value.
+     */
+    Node.prototype.value = function () {
+        return this._value;
+    };
+
+    /**
+     * Retrieves the log entries.
+     */
+    Node.prototype.log = function () {
+        return this._log;
+    };
+
+    /**
+     * Retrieve the current node timer.
+     */
+    Node.prototype.timer = function () {
+        return this._timer;
+    };
+
+    /**
+     * Sets or retrieves the current term.
+     */
+    Node.prototype.currentTerm = function (value) {
+        if (arguments.length === 0) {
+            return this._currentTerm;
+        }
+        var changed = (value > this._currentTerm);
+        if (changed) {
+            this._currentTerm = value;
+            this.state("follower");
+        }
+        return this._value;
+    };
+
+    /**
+     * Sets or retrieves the node state.
+     */
+    Node.prototype.state = function (value) {
+        if (arguments.length === 0) {
+            return this._state;
+        }
+        if (this._state !== value) {
+            this._state = value;
+
+            // Clear the existing state timer.
+            this.frame().clearTimer(this.timerId);
+            this.timerId = 0;
+
+            // Begin event loop for this node.
+            switch (this._state) {
+            case "leader":
+                this.leaderEventLoop();
+                break;
+            case "candidate":
+                this.candidateEventLoop();
+                break;
+            case "follower":
+                this.followerEventLoop();
+                break;
+            case "stopped":
+                break;
+            default:
+                throw new Error("Invalid node state: " + this._state);
+            }
+        }
+
+        return this;
+    };
+
+    /**
+     * Runs the node as a leader:
+     *
+     *   - Upon election: send initial empty AE RPC to each server,
+     *     repeat during idle periods to prevent election timeouts. (§5.2)
+     *
+     *   - If command received from client: append entry to local log,
+     *     respond after entry applied to state machine. (§5.3)
+     *
+     *   - If last log index ≥ nextIndex for a follower: send AE
+     *     RPC with log entries starting at nextIndex.
+     *     - If succcessful: update nextIndex and matchIndex for follower (§5.3).
+     *     - If AE fails because of log inconsistency: decrement nextIndex
+     *       and retry (§5.3).
+     *
+     *   - If there exists an N such that N > commitIndex, a majority of
+     *     matchIndex[i] ≥ N, and log[N].term == currentTerm:
+     *     set commitIndex = N (§5.3, §5.4).
+     */
+    Node.prototype.leaderEventLoop = function () {
         var self = this,
             frame = this.frame();
 
+        // Reset known indices on other servers.
+        this._nextIndex = {};
+        this._matchIndex = {};
+
         // Send heartbeats to followers.
-        this.timerId = frame.timer(function() {
+        this.timer = frame.timer(function() {
             self.model().nodes.toArray().forEach(function(node) {
-                if (node.id !== this.id) {
+                if (node.id !== self.id) {
                     self.sendAppendEntriesRequest(node);
                 }
             });
-        }).interval(this.model().heartbeatTimeout).delay(this.model().heartbeatTimeout).id();
+        }).interval(this.model().heartbeatTimeout).delay(this.model().heartbeatTimeout);
     };
 
-    Node.prototype.simulateCandidate = function () {
+    /**
+     * Runs the node as a candidate:
+     *
+     *   - On conversion to candidate, start election:
+     *     - Increment currentTerm.
+     *     - Vote for self.
+     *     - Reset election timeout.
+     *     - Send RequestVote RPCs to all other servers.
+     *
+     *   - If votes received from majority of server: become leader.
+     *
+     *   - If AppendEntries RPC received from new leader: convert to follower.
+     *
+     *   - If election timeout elapses, start new election.
+     */
+    Node.prototype.candidateEventLoop = function () {
     };
 
-    Node.prototype.simulateFollower = function () {
+    /**
+     * Runs the node as a follower.
+     *
+     *   - Respond to RPCs from candidates and leaders.
+     *
+     *   - If election timeout elapses without receiving AE RPC
+     *     from current leader or granting vote to candidate:
+     *     convert to candidate.
+     */
+    Node.prototype.followerEventLoop = function () {
     };
 
 
-    Node.prototype.sendAppendEntriesRequest = function (node) {
+    Node.prototype.sendAppendEntriesRequest = function (target) {
         var self  = this,
             frame = this.frame(),
-            term         = this.log.term,
-            leaderId     = this.id,
-            prevLogIndex = 0,
-            prevLogTerm  = 0,
-            entries      = this.log.entries.slice(),
-            leaderCommit = this.log.commitIndex;
+            nextIndex = this._nextIndex[target.id],
+            prevEntry = this._log[nextIndex-1],
+            req   = {
+                term: this.currentTerm(),
+                leaderId: this.id,
+                prevLogIndex: (prevEntry !== undefined ? prevEntry.index : 0),
+                prevLogTerm: (prevEntry !== undefined ? prevEntry.term : 0),
+                log: this._log.slice(nextIndex),
+                leaderCommit: this.commitIndex,
+            };
 
-        this.model().send(this, node, latency, function() {
-            node.recvAppendEntries(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit);
+        this.model().send("AEREQ", this, target, function() {
+            target.recvAppendEntriesRequest(self, req);
         });
     };
 
-    Node.prototype.recvAppendEntriesRequest = function (term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit) {
+    Node.prototype.recvAppendEntriesRequest = function (source, req) {
         var self  = this,
-            frame = this.frame();
+            frame = this.frame(),
+            prevEntry = this._log[req.prevLogIndex],
+            success = true;
 
-        // Reset the next election for this node.
-        this.electionTimeout = (this.model().electionTimeout * (1 + Math.random()));
-        this.electionAt = frame.playhead() + this.electionTimeout;
+        this.currentTerm(req.term);
+
+        // Reply false if term < currentTerm (§5.3).
+        if (req.term < this.currentTerm()) {
+            success = false;
+        }
+        // Reply false if log doesn't contain an entry at prevLogIndex whose
+        // term matchs prevLogTerm (§5.3).
+        else if (prevEntry === undefined || prevEntry.term !== req.prevLogTerm) {
+            success = false;
+        }
+
+        if (success) {
+            // If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it (§5.3).
+            // Append any new entries not already in the log.
+            if (req.log.length > 0) {
+                this._log = this._log.slice(0, req.log[0])
+            }
+
+            // If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, last log index).
+            this.commitIndex(req.leaderCommit);
+        }
+
+        // Send response.
+        var resp = {term: this.currentTerm(), success: success};
+        resp.nextIndex = (this._log.length > 0 ? this._log[this._log.length-1].index : 0);
+        this.model().send("AERSP", this, source, function() {
+            source.recvAppendEntriesResponse(self, resp);
+        });
+    };
+
+    Node.prototype.recvAppendEntriesResponse = function (source, resp) {
+        this.currentTerm(resp.term);
+        if (resp.success) {
+            this._nextIndex[source.id] = resp.nextIndex;
+        }
     };
 
     /**
@@ -113,9 +263,8 @@ define(["./log", "./bbox"], function (Log, BBox) {
     Node.prototype.clone = function () {
         var i, clone = new Node();
         clone.id = this.id;
-        clone.state = this.state;
-        clone.timerId = this.timerId;
-        clone.log = this.log.clone();
+        clone._state = this._state;
+        clone._log = this._log.map(function (entry) { return entry.clone(); });
         return clone;
     };
 

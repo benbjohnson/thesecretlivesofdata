@@ -44,7 +44,7 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            node("b").state = "follower";
+            node("b").state("follower");
             model().subtitle = '<h2>The <em>Follower</em> state,</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -52,7 +52,7 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            node("b").state = "candidate";
+            node("b").state("candidate");
             model().subtitle = '<h2>the <em>Candidate</em> state,</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -60,7 +60,7 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            node("b").state = "leader";
+            node("b").state("leader");
             model().subtitle = '<h2>or the <em>Leader</em> state.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -71,7 +71,7 @@ define([], function () {
         .after(300, function () {
             frame.snapshot();
             model().zoom(null);
-            node("b").state = "follower";
+            node("b").state("follower");
             model().subtitle = '<h2>All our nodes start in the follower state.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -86,7 +86,7 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            node("a").state = "candidate";
+            node("a").state("candidate");
             layout.invalidate();
             this.after(200, function () { model().controls.show(); })
         })
@@ -97,8 +97,8 @@ define([], function () {
             layout.invalidate();
         })
         .after(300, function () {
-            model().send(node("a"), node("b"), 1000)
-            model().send(node("a"), node("c"), 1000)
+            model().send("", node("a"), node("b"))
+            model().send("", node("a"), node("c"))
             layout.invalidate();
         })
         .after(1000, function () { model().controls.show(); })
@@ -109,12 +109,12 @@ define([], function () {
             layout.invalidate();
         })
         .after(300, function () {
-            model().send(node("b"), node("a"), 1000)
-            model().send(node("c"), node("a"), 1000)
+            model().send("", node("b"), node("a"))
+            model().send("", node("c"), node("a"))
             layout.invalidate();
         })
         .after(1000, function () {
-            node("a").state = "leader";
+            node("a").state("leader");
             layout.invalidate();
             model().controls.show();
         })
@@ -152,7 +152,7 @@ define([], function () {
             layout.invalidate();
         })
         .after(500, function () {
-            model().send(client("x"), node("a"), 1000);
+            model().send("", client("x"), node("a"));
             layout.invalidate();
         })
         .after(1000, function () {
@@ -176,8 +176,8 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            model().send(node("a"), node("b"), 1000)
-            model().send(node("a"), node("c"), 1000)
+            model().send("", node("a"), node("b"))
+            model().send("", node("a"), node("c"))
             model().subtitle = '<h2>To commit the entry the node first replicates it to the follower nodes...</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -190,8 +190,8 @@ define([], function () {
         })
         .after(100, function () {
             frame.snapshot();
-            model().send(node("b"), node("a"), 1000)
-            model().send(node("c"), node("a"), 1000)
+            model().send("", node("b"), node("a"))
+            model().send("", node("c"), node("a"))
             model().subtitle = '<h2>then the leader waits until a majority of nodes have written the entry.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -211,8 +211,8 @@ define([], function () {
         })
         .after(300, function () {
             frame.snapshot();
-            model().send(node("a"), node("b"), 1000)
-            model().send(node("a"), node("c"), 1000)
+            model().send("", node("a"), node("b"))
+            model().send("", node("a"), node("c"))
             model().subtitle = '<h2>The leader then notifies the followers that the entry is committed.</h2>'
                            + model().controls.html();
             layout.invalidate();

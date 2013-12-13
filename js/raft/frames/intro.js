@@ -94,7 +94,7 @@ define([], function () {
             layout.invalidate();
         })
         .after(1000, function () {
-            frame.model().send(client("X"), node("a"), 1000);
+            frame.model().send("", client("X"), node("a"));
             layout.invalidate();
         })
         .after(1000, function () {

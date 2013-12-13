@@ -39,12 +39,10 @@ define([], function () {
             this.after(200, function () { model().controls.show(); })
         })
         .after(300, function () {
-            node("b").state = "leader";
+            node("b").state("leader");
             model().subtitle = '<h2>The <span style="color:green">heartbeat timeout</span> is the interval at which a leader sends heartbeats to followers.</h2>'
                            + model().controls.html();
             layout.invalidate();
-
-            model().simulate();
         })
         .after(200, wait).indefinite()
         .after(100, function () {
@@ -73,7 +71,7 @@ define([], function () {
         })
         .after(200, wait).indefinite()
         .after(100, function () {
-            node("b").state = "stopped";
+            node("b").state("stopped");
             node("b").simulate();
             model().subtitle = '<h2>If a follower hears no heartbeats within an election timeout then it will become a <strong>candidate</strong>.</h2>'
                            + model().controls.html();

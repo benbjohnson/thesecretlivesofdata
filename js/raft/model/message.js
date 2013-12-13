@@ -9,6 +9,7 @@ define(["./bbox"], function (BBox) {
     function Message(id) {
         nextId += 1;
         this.id = nextId;
+        this.type   = "";
         this.source = null;
         this.target = null;
         this.sendTime = 0;
@@ -28,9 +29,10 @@ define(["./bbox"], function (BBox) {
 
     Message.prototype.clone = function () {
         var i, clone = new Message();
-        clone.id = this.id;
-        clone.source = this.source;
-        clone.target = this.target;
+        clone.id       = this.id;
+        clone.type     = this.type;
+        clone.source   = this.source;
+        clone.target   = this.target;
         clone.sendTime = this.sendTime;
         clone.recvTime = this.recvTime;
         return clone;

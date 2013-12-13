@@ -50,10 +50,10 @@ define([], function () {
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
                 var transform = function(d) { return "translate(" + self.parent().scales.x(d.x) + "," + self.parent().scales.y(d.y) + ")"; },
-                    fill = function (d) { return d.state === "stopped" ? "gray" : "steelblue"; },
+                    fill = function (d) { return d.state() === "stopped" ? "gray" : "steelblue"; },
                     stroke = {
-                        dash: function (d) { return (d.state === "candidate" ? "5,5" : ""); },
-                        opacity: function (d) { return (d.state === "follower" || d.state === "stopped" ? 0 : 1); },
+                        dash: function (d) { return (d.state() === "candidate" ? "5,5" : ""); },
+                        opacity: function (d) { return (d.state() === "follower" || d.state() === "stopped" ? 0 : 1); },
                     };
 
                 var g = this.enter().append("g")
@@ -88,10 +88,10 @@ define([], function () {
                     .style("fill", fill);
                 g.select("text.node-value")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
-                    .text(function (d) { return d.value; });
+                    .text(function (d) { return d.value(); });
 
                 g.each(function(node) {
-                    d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log.entries)
+                    d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log())
                         .call(function() {
                             var transform = function(d) { return "translate(" + self.parent().scales.size(d.dx) + "," + self.parent().scales.size(d.dy) + ")"};
                             var text = {
@@ -190,8 +190,8 @@ define([], function () {
             node = nodes[i];
             nodes[i].r = RADIUS;
 
-            for (j = 0; j < node.log.entries.length; j += 1) {
-                entry = node.log.entries[j];
+            for (j = 0; j < node.log().length; j += 1) {
+                entry = node.log()[j];
                 entry.dx = ENTRY.x;
                 entry.dy = ENTRY.y + (ENTRY.h * j);
                 entry.x = node.x + entry.dx;

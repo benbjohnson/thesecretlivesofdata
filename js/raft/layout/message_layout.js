@@ -4,7 +4,28 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var RADIUS = 2;
+    var TYPE = {
+            "AEREQ": {
+                color: "red",
+                size: 2,
+                opacity: 1,
+            },
+            "AERSP": {
+                color: "red",
+                size: 1,
+                opacity: 0,
+            },
+            "RVREQ": {
+                color: "green",
+                size: 2,
+                opacity: 1,
+            },
+            "RVRSP": {
+                color: "green",
+                size: 1,
+                opacity: 0,
+            }
+        };
 
     function MessageLayout(parent) {
         this._parent = parent;
@@ -42,14 +63,27 @@ define([], function () {
 
         this.g().selectAll(".message").data(messages, function (d) { return d.id; })
             .call(function () {
+                var fill = {
+                    color: function (d) { return TYPE[d.type] ? TYPE[d.type].color : "black"; },
+                    opacity: function (d) { return TYPE[d.type] ? TYPE[d.type].opacity : 1; }
+                },
+                stroke = {
+                    color: function (d) { return TYPE[d.type] ? TYPE[d.type].color : "black"; }
+                };
                 this.enter().append("circle")
                     .attr("class", "message")
                     .attr("r", r)
-                    .style("fill", "red")
+                    .style("fill", fill.color)
+                    .style("fill-opacity", fill.opacity)
+                    .style("stroke", stroke.color)
+                    .style("stroke-width", 2)
                     .each(function(d) { this.__data__.g = this });
 
                 this.attr("cx", function (d) { return d.x_px; })
-                    .attr("cy", function (d) { return d.y_px; });
+                    .attr("cy", function (d) { return d.y_px; })
+                    .style("fill", fill.color)
+                    .style("fill-opacity", fill.opacity)
+                    .style("stroke", stroke.color);
 
                 // Scale r only if the domain has changed.
                 if (rscaling) {
@@ -80,7 +114,7 @@ define([], function () {
 
             message.x_px = source.e + ((target.e - source.e) * pct);
             message.y_px = source.f + ((target.f - source.f) * pct);
-            message.r = RADIUS;
+            message.r = (TYPE[message.type] ? TYPE[message.type].size : 2);
         }
     };
 

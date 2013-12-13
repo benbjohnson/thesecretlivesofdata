@@ -61,21 +61,26 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
      *
      * @return {Message}
      */
-    Model.prototype.send = function (source, target, duration, callback) {
+    Model.prototype.send = function (type, source, target, callback) {
         var message,
-            latency = this.model().latency(message.source, message.target);
+            source = (typeof(source) == "string" ? source : source.id),
+            target = (typeof(target) == "string" ? target : target.id),
+            latency = this.latency(source, target);
 
         if (!(latency > 0)) {
             return null;
         }
 
         message = this.messages.create();
-        message.source = (typeof(source) == "string" ? source : source.id);
-        message.target = (typeof(target) == "string" ? target : target.id);
+        message.type     = type;
+        message.source   = source;
+        message.target   = target;
         message.sendTime = this.playhead();
-        message.recvTime = message.sendTime + duration;
+        message.recvTime = message.sendTime + latency;
 
-        frame().after(latency, callback);
+        if (callback !== undefined && callback !== null) {
+            this.frame().after(latency, callback);
+        }
 
         return message;
     };
@@ -143,18 +148,6 @@ define(["./controls", "./client", "./message", "./node", "./bbox"], function (Co
             }
         })
         return playhead;
-    };
-
-    /**
-     * Runs a simulation.
-     */
-    Model.prototype.simulate = function () {
-        var i,
-            timers = [],
-            nodes = this.nodes.toArray();
-        for (i = 0; i < nodes.length; i += 1) {
-            timers.push(nodes[i].simulate(this));
-        }
     };
 
     /**

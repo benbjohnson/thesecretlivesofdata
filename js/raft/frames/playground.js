@@ -33,8 +33,8 @@ define([], function () {
         })
 
         .after(500, function () {
-            nodes.a.state = "candidate";
-            nodes.b.state = "leader";
+            nodes.a.state("candidate");
+            nodes.b.state("leader");
             model.zoom([nodes.a]);
             layout.invalidate();
         })
@@ -74,7 +74,7 @@ define([], function () {
 
         .after(500, function () {
             client.value = "";
-            model.send(client, nodes.a, 1000)
+            model.send("", client, nodes.a)
             layout.invalidate();
         })
 
