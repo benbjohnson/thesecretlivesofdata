@@ -9,7 +9,6 @@ define([], function () {
     function Message(id) {
         nextId += 1;
         this.id = nextId;
-        this.type   = "";
         this.source = null;
         this.target = null;
         this.sendTime = 0;
@@ -21,6 +20,13 @@ define([], function () {
     Message.prototype.constructor = Message;
 
     /**
+     * Retrieves the message type from the payload.
+     */
+    Message.prototype.type = function () {
+        return this.payload !== null && this.payload !== undefined ? this.payload.type : "";
+    };
+
+    /**
      * Determines the bounding box of the message.
      */
     Message.prototype.bbox = function () {
@@ -30,9 +36,9 @@ define([], function () {
     Message.prototype.clone = function () {
         var i, clone = new Message();
         clone.id       = this.id;
-        clone.type     = this.type;
         clone.source   = this.source;
         clone.target   = this.target;
+        clone.payload  = this.payload;
         clone.sendTime = this.sendTime;
         clone.recvTime = this.recvTime;
         return clone;

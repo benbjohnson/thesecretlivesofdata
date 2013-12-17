@@ -6,6 +6,7 @@
 define([], function () {
     function Client(id) {
         this.id = id;
+        this._value = "";
     }
 
     Client.prototype = playback.dataObject();
@@ -16,6 +17,17 @@ define([], function () {
      */
     Client.prototype.bbox = function () {
         return tsld.bbox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
+    };
+
+    /**
+     * Returns the value of the client.
+     */
+    Client.prototype.value = function (value) {
+        if (arguments.length === 0) {
+            return this._value;
+        }
+        this._value = value;
+        return this;
     };
 
     Client.prototype.clone = function () {

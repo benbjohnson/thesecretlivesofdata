@@ -7,12 +7,10 @@ define([], function () {
     return function (frame) {
         var player = frame.player(),
             layout = frame.layout(),
-            client = function(id) {
-                return frame.model().clients.find(id);
-            },
-            node = function(id) {
-                return frame.model().nodes.find(id);
-            };
+            model = function() { return frame.model(); },
+            client = function(id) { return frame.model().clients.find(id); },
+            node = function(id) { return frame.model().nodes.find(id); },
+            wait = function() { var self = this; model().controls.show(function() { self.stop(); }); };
 
         frame.after(1, function() {
             frame.snapshot();
@@ -48,7 +46,7 @@ define([], function () {
             frame.model().nodes.create("a");
             layout.invalidate();
         })
-        .after(100, function () { frame.model().controls.show(); })
+        .after(100, wait).indefinite()
 
         .after(100, function () {
             frame.snapshot();
@@ -61,11 +59,13 @@ define([], function () {
                            + frame.model().controls.html();
             layout.invalidate();
         })
-        .after(1000, function () {
-            node("a").value = "x";
+        .after(100, wait).indefinite()
+        .after(100, function () {
+            frame.snapshot();
+            node("a")._value = "x";
             layout.invalidate();
         })
-        .after(100, function () { frame.model().controls.show(); })        
+        .after(100, wait).indefinite()
 
         .after(100, function () {
             frame.snapshot();
@@ -82,31 +82,29 @@ define([], function () {
             frame.model().clients.create("X");
             layout.invalidate();
         })
-        .after(500, function () {
-            frame.model().controls.show();
-        })
+        .after(100, wait).indefinite()
 
 
         .after(100, function () {
             frame.snapshot();
             frame.model().subtitle += "";
-            client("X").value = "8";
+            client("X").value("8");
             layout.invalidate();
         })
-        .after(1000, function () {
-            frame.model().send(client("X"), node("a"));
+        .after(200, function () {
+            frame.model().send(client("X"), node("a"), null, function() {
+                node("a")._value = "8";
+                layout.invalidate();
+            });
             layout.invalidate();
         })
-        .after(1000, function () {
-            node("a").value = "8";
-            layout.invalidate();
-        })
+        .after(100, wait).indefinite()
         .after(100, function () {
             frame.model().subtitle = '<h3>Coming to agreement on that value, or <em>consensus</em>, is easy with one node.</h3>'
                            + frame.model().controls.html();
             layout.invalidate();
-            frame.model().controls.show();
         })
+        .after(100, wait).indefinite()
 
 
         .after(100, function () {
@@ -123,9 +121,7 @@ define([], function () {
             frame.model().nodes.create("c");
             layout.invalidate();
         })
-        .after(100, function () {
-            frame.model().controls.show();
-        })
+        .after(100, wait).indefinite()
 
 
         .after(100, function () {
@@ -133,8 +129,8 @@ define([], function () {
             frame.model().subtitle = '<h3>That\'s the problem of <em>distributed consensus</em>.</h3>'
                            + frame.model().controls.html();
             layout.invalidate();
-            this.after(200, function () { frame.model().controls.show(); });
         })
+        .after(100, wait).indefinite()
 
         .after(300, function () {
             frame.snapshot();

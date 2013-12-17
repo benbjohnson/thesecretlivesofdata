@@ -20,6 +20,24 @@ define([], function () {
         return tsld.bbox(this.y, this.x + this.w, this.y + this.h, this.x);
     };
 
+    /**
+     * Determines the bounding box of the log entry.
+     */
+    LogEntry.prototype.bbox = function () {
+        return tsld.bbox(this.y, this.x + this.w, this.y + this.h, this.x);
+    };
+
+    /**
+     * Applies the log to a node.
+     */
+    LogEntry.prototype.applyTo = function (node) {
+        var m = this.command.match(/^SET (\d+)$/);
+        if (m !== null) {
+            node._value = parseInt(m[1], 10);
+            return;
+        }
+    };
+
     LogEntry.prototype.clone = function () {
         var clone = new LogEntry();
         clone.index = this.index;

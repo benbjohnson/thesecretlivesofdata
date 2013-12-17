@@ -97,7 +97,7 @@ define([], function () {
                             var text = {
                                 x: function(d) { return self.parent().scales.size(0.25); },
                                 y: function(d) { return (self.parent().scales.size(d.h) / 2) + 2; },
-                                fill: function(d) { return (d.index <= node.log.commitIndex ? "black" : "red"); },
+                                fill: function(d) { return (d.index <= node.commitIndex() ? "black" : "red"); },
                             };
                             var g = this.enter().append("g").attr("class", "log-entry");
                             g.attr("transform", transform);

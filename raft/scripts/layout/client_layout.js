@@ -68,7 +68,7 @@ define([], function () {
                     .attr("r", function (d) { return self.parent().scales.r(d.r); })
                 g.select("text")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
-                    .text(function (d) { return d.value; });
+                    .text(function (d) { return d.value(); });
 
                 g = this.exit()
                     .each(function(d) { this.__data__.g = null });

@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback, tsld*/
 
-define([], function () {
+define(["./log_entry"], function (LogEntry) {
     function Node(id) {
         this.id = id;
         this._state = "follower";
@@ -16,6 +16,8 @@ define([], function () {
         this._matchIndex = {};
         this._timer = null;
         this._log = [];
+        this._electionTimer = null;
+        this.cluster([]);
     }
 
     Node.prototype = playback.dataObject();
@@ -56,6 +58,24 @@ define([], function () {
 
 
     /**
+     * Sets or retrieves the list of nodes in the cluster.
+     */
+    Node.prototype.cluster = function (value) {
+        var cluster = value;
+        if (arguments.length === 0) {
+            return this._cluster;
+        }
+
+        // Make sure this node is in the cluster.
+        if (cluster.indexOf(this.id) === -1) {
+            cluster = cluster.concat([this.id]);
+        }
+
+        this._cluster = cluster;
+        return this;
+    };
+
+    /**
      * Retrieve the current node value.
      */
     Node.prototype.value = function () {
@@ -70,10 +90,89 @@ define([], function () {
     };
 
     /**
-     * Retrieve the current commit index.
+     * Sets or retrieve the current commit index.
      */
-    Node.prototype.commitIndex = function () {
-        return this._commitIndex;
+    Node.prototype.commitIndex = function (value) {
+        var i;
+        if (arguments.length === 0) {
+            return this._commitIndex;
+        }
+
+        // Apply new committed entries.
+        if (value > this._commitIndex) {
+            for (i = this._commitIndex; i < value; i += 1) {
+                this._log[i].applyTo(this);
+            }
+            this._commitIndex = value;
+        }
+
+        return this;
+    };
+
+    /**
+     * Sets or retrieves the next index for a node.
+     */
+    Node.prototype.nextIndex = function (id, value) {
+        if (arguments.length === 1) {
+            if (this._nextIndex[id] === undefined) {
+                return 1;
+            }
+            return this._nextIndex[id];
+        }
+
+        this._nextIndex[id] = value;
+
+        return this;
+    };
+
+    /**
+     * Sets or retrieves the match index for a node.
+     * Updates the commitIndex if a quorum is committed.
+     */
+    Node.prototype.matchIndex = function (id, value) {
+        var i, key, newCommitIndex,
+            indices = {},
+            quorumSize = Math.ceil(this._cluster.length / 2);
+
+        if (arguments.length === 0) {
+            throw new Error("At least 1 argument required");
+        }
+
+        if (arguments.length === 1) {
+            if (this._matchIndex[id] === undefined) {
+                return 0;
+            }
+            return this._matchIndex[id];
+        }
+
+        // Only update if this node is the leader.
+        if (this.state() === "leader") {
+            this._matchIndex[id] = value;
+
+            // Update commit index.
+            if (this._log.length > 0) {
+                // Update this server's index.
+                this._matchIndex[this.id] = this._log[this._log.length-1].index;
+
+                // Set index commit counts.
+                for (key in this._matchIndex) {
+                    for (i = this.commitIndex() + 1; i <= this._matchIndex[key]; i += 1) {
+                        indices[i] = (indices[i] !== undefined ? indices[i] : 0) + 1;
+                    }
+                }
+
+                // Find the highest replicated index with a quorum.
+                newCommitIndex = this.commitIndex();
+                for (key in indices) {
+                    if (indices[key] >= quorumSize) {
+                        newCommitIndex = Math.max(newCommitIndex, key);
+                    }
+                }
+                this.commitIndex(newCommitIndex);
+            }
+        }
+
+        return this;
     };
 
     /**
@@ -133,6 +232,20 @@ define([], function () {
         return this;
     };
 
+    /**
+     * Executes a given command.
+     */
+    Node.prototype.execute = function (command) {
+        var entry,
+            prevIndex = (this._log.length > 0 ? this._log[this._log.length-1].index : 0);
+        if (this.state() !== "leader") {
+            return false;
+        }
+
+        // Append to log.
+        this._log.push(new LogEntry(prevIndex + 1, this.currentTerm(), command));
+    };
+
 
     //----------------------------------
     // Event Loops
@@ -165,11 +278,14 @@ define([], function () {
         this._nextIndex = {};
         this._matchIndex = {};
 
+        this.clearElectionTimer();
+
         // Send heartbeats to followers.
         this.timer = frame.timer(function() {
-            self.model().nodes.toArray().forEach(function(node) {
-                if (node.id !== self.id) {
-                    self.sendAppendEntriesRequest(node);
+            self.cluster().forEach(function(id) {
+                var target = self.model().nodes.find(id);
+                if (target !== null && target.id !== self.id) {
+                    self.sendAppendEntriesRequest(target);
                 }
             });
         }).interval(this.model().heartbeatTimeout).delay(this.model().heartbeatTimeout);
@@ -193,7 +309,10 @@ define([], function () {
     Node.prototype.candidateEventLoop = function () {
         this._currentTerm += 1;
         // TODO: Vote for self.
-        // TODO: Reset election timeout
+
+        // Reset election timeout
+        this.resetElectionTimer();
+
         // TODO: Send RequestVote RPCs to all other servers.
     };
 
@@ -207,7 +326,33 @@ define([], function () {
      *     convert to candidate.
      */
     Node.prototype.followerEventLoop = function () {
-        // TODO: Reset election timeout.
+        this.resetElectionTimer();
+    };
+
+
+    //----------------------------------
+    // Election Timer
+    //----------------------------------
+
+    /**
+     * Starts a new timer to that will kick off an election.
+     */
+    Node.prototype.resetElectionTimer = function () {
+        var electionTimeout = this.model().electionTimeout,
+            timeout = electionTimeout * (1 + Math.random());
+
+        this._electionTimer = this.frame().after(timeout, function() {
+            this.state("candidate");
+        });
+    };
+
+    /**
+     * Clears the election timer.
+     */
+    Node.prototype.clearElectionTimer = function () {
+        var timerId = (this._electionTimer !== null ? this._electionTimer.id() : 0);
+        this.frame().clearTimer(timerId);
+        this._electionTimer = null;
     };
 
 
@@ -238,7 +383,7 @@ define([], function () {
     Node.prototype.recvAppendEntriesRequest = function (source, req) {
         var self  = this,
             frame = this.frame(),
-            prevEntry = this._log[req.prevLogIndex],
+            prevEntry = this._log[req.prevLogIndex-1],
             success = true;
 
         this.currentTerm(req.term);
@@ -257,11 +402,17 @@ define([], function () {
             // If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it (§5.3).
             // Append any new entries not already in the log.
             if (req.log.length > 0) {
-                this._log = this._log.slice(0, req.log[0])
+                this._log = this._log.slice(0, req.log[0].index-1);
             }
+
+            // Append log entries.
+            this._log = this._log.concat(req.log);
 
             // If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, last log index).
             this.commitIndex(req.leaderCommit);
+
+            // Reset election timeout.
+            this.resetElectionTimer();
         }
 
         // Send response.
@@ -278,8 +429,10 @@ define([], function () {
 
     Node.prototype.recvAppendEntriesResponse = function (source, req, resp) {
         this.currentTerm(resp.term);
-        if (resp.success) {
-            this._nextIndex[source.id] = resp.nextIndex;
+
+        if (resp.success && req.log.length > 0) {
+            this.nextIndex(source.id, req.log[req.log.length-1].index + 1);
+            this.matchIndex(source.id, req.log[req.log.length-1].index);
         }
     };
 
