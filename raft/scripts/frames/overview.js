@@ -20,7 +20,6 @@ define(["../model/log_entry"], function (LogEntry) {
             layout.invalidate();
         })
 
-        /*
         .after(800, function () {
             model().subtitle = '<h2><em>Raft</em> is a protocol for implementing distributed consensus.</h2>'
                            + model().controls.html();
@@ -68,7 +67,6 @@ define(["../model/log_entry"], function (LogEntry) {
             layout.invalidate();
         })
         .after(100, wait).indefinite()
-        */
 
         .after(300, function () {
             frame.snapshot();
@@ -85,9 +83,7 @@ define(["../model/log_entry"], function (LogEntry) {
                            + model().controls.html();
             layout.invalidate();
         })
-        .after(100, wait).indefinite()
         .after(100, function () {
-            frame.snapshot();
             node("a").state("candidate");
             layout.invalidate();
         })
@@ -98,13 +94,12 @@ define(["../model/log_entry"], function (LogEntry) {
                            + model().controls.html();
             layout.invalidate();
         })
-        .after(100, wait).indefinite()
         .after(100, function () {
             model().send(node("a"), node("b"), {type:"RVREQ"})
             model().send(node("a"), node("c"), {type:"RVREQ"})
             layout.invalidate();
         })
-        .after(1000, function () { model().controls.show(); })
+        .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
             model().subtitle = '<h2>Nodes will reply with their vote.</h2>'
@@ -220,16 +215,18 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            model().send(node("a"), node("b"))
-            model().send(node("a"), node("c"))
+            model().send(node("a"), node("b"), {type:"AEREQ"}, function () {
+                node("b")._value = "5";
+                node("b")._commitIndex = 1;
+                layout.invalidate();
+            });
+            model().send(node("a"), node("c"), {type:"AEREQ"}, function () {
+                node("c")._value = "5";
+                node("c")._commitIndex = 1;
+                layout.invalidate();
+            });
             model().subtitle = '<h2>The leader then notifies the followers that the entry is committed.</h2>'
                            + model().controls.html();
-            layout.invalidate();
-        })
-        .after(1000, function () {
-            frame.snapshot();
-            node("b")._value = node("c")._value = "5";
-            node("b")._commitIndex = node("c")._commitIndex = 1;
             layout.invalidate();
         })
         .after(100, wait).indefinite()
@@ -249,6 +246,13 @@ define(["../model/log_entry"], function (LogEntry) {
             layout.invalidate();
         })
         .after(100, wait).indefinite()
+
+
+        .after(300, function () {
+            frame.snapshot();
+            player.next();
+        })
+
 
         player.play();
     };

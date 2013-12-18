@@ -4,24 +4,36 @@
 /*global define, playback, tsld*/
 
 define(["./log_entry"], function (LogEntry) {
-    function Node(id) {
+    function Node(model, id) {
+        playback.DataObject.call(this, model);
         this.id = id;
         this._state = "follower";
+        this._cluster = [this];
         this._value = "";
         this._currentTerm = 0;
         this._votedFor = null;
+        this._voteCount = null;
         this._commitIndex = 0;
         this._lastApplied = 0;
         this._nextIndex = {};
         this._matchIndex = {};
         this._timer = null;
+        this._electionTimeout = 0;
         this._log = [];
+        this._heartbeatTimer = null;
         this._electionTimer = null;
-        this.cluster([]);
     }
 
-    Node.prototype = playback.dataObject();
+    Node.prototype = new playback.DataObject();
     Node.prototype.constructor = Node;
+
+    /**
+     * Initializes the node to a follower.
+     */
+    Node.prototype.init = function () {
+        this.state("follower");
+        return this;
+    };
 
     /**
      * Sets or retrieves the model.
@@ -192,6 +204,8 @@ define(["./log_entry"], function (LogEntry) {
         var changed = (value > this._currentTerm);
         if (changed) {
             this._currentTerm = value;
+            this._votedFor = null;
+            this._voteCount = 0;
             this.state("follower");
         }
         return this._value;
@@ -204,29 +218,23 @@ define(["./log_entry"], function (LogEntry) {
         if (arguments.length === 0) {
             return this._state;
         }
-        if (this._state !== value) {
-            this._state = value;
+        this._state = value;
 
-            // Clear the existing state timer.
-            this.frame().clearTimer(this.timer);
-            this.timer = null;
-
-            // Begin event loop for this node.
-            switch (this._state) {
-            case "leader":
-                this.leaderEventLoop();
-                break;
-            case "candidate":
-                this.candidateEventLoop();
-                break;
-            case "follower":
-                this.followerEventLoop();
-                break;
-            case "stopped":
-                break;
-            default:
-                throw new Error("Invalid node state: " + this._state);
-            }
+        // Begin event loop for this node.
+        switch (this._state) {
+        case "leader":
+            this.leaderEventLoop();
+            break;
+        case "candidate":
+            this.candidateEventLoop();
+            break;
+        case "follower":
+            this.followerEventLoop();
+            break;
+        case "stopped":
+            break;
+        default:
+            throw new Error("Invalid node state: " + this._state);
         }
 
         return this;
@@ -279,16 +287,7 @@ define(["./log_entry"], function (LogEntry) {
         this._matchIndex = {};
 
         this.clearElectionTimer();
-
-        // Send heartbeats to followers.
-        this.timer = frame.timer(function() {
-            self.cluster().forEach(function(id) {
-                var target = self.model().nodes.find(id);
-                if (target !== null && target.id !== self.id) {
-                    self.sendAppendEntriesRequest(target);
-                }
-            });
-        }).interval(this.model().heartbeatTimeout).delay(this.model().heartbeatTimeout);
+        this.resetHeartbeatTimer();
     };
 
     /**
@@ -307,13 +306,19 @@ define(["./log_entry"], function (LogEntry) {
      *   - If election timeout elapses, start new election.
      */
     Node.prototype.candidateEventLoop = function () {
+        // Increment current term.
         this._currentTerm += 1;
-        // TODO: Vote for self.
 
-        // Reset election timeout
+        // Vote for self.
+        this._votedFor = this.id;
+        this._voteCount = 1;
+
+        // Reset timers.
+        this.clearHeartbeatTimer();
         this.resetElectionTimer();
 
-        // TODO: Send RequestVote RPCs to all other servers.
+        // Send RequestVote RPCs to all other servers.
+        this.sendRequestVoteRequests();
     };
 
     /**
@@ -326,7 +331,43 @@ define(["./log_entry"], function (LogEntry) {
      *     convert to candidate.
      */
     Node.prototype.followerEventLoop = function () {
+        this.clearHeartbeatTimer();
         this.resetElectionTimer();
+    };
+
+
+    //----------------------------------
+    // Heartbeat Timer
+    //----------------------------------
+
+    /**
+     * Retrieves the current heartbeat timer.
+     */
+    Node.prototype.heartbeatTimer = function () {
+        return this._heartbeatTimer;
+    };
+
+    /**
+     * Starts a new timer to that will send out heartbeats.
+     */
+    Node.prototype.resetHeartbeatTimer = function () {
+        var self = this,
+            timeout = this.model().heartbeatTimeout;
+
+        if (this._heartbeatTimer === null) {
+            this.clearHeartbeatTimer();
+            this._heartbeatTimer = this.frame().timer(function() {
+                self.sendAppendEntriesRequests();
+            }).interval(timeout).delay(timeout);
+        }
+    };
+
+    /**
+     * Clears the heartbeat timer.
+     */
+    Node.prototype.clearHeartbeatTimer = function () {
+        this.frame().clearTimer(this.heartbeatTimer());
+        this._heartbeatTimer = null;
     };
 
 
@@ -335,14 +376,31 @@ define(["./log_entry"], function (LogEntry) {
     //----------------------------------
 
     /**
+     * Retrieves the current election timer.
+     */
+    Node.prototype.electionTimer = function () {
+        return this._electionTimer;
+    };
+
+    /**
+     * Retrieves the current election timeout value.
+     */
+    Node.prototype.electionTimeout = function () {
+        return this._electionTimeout;
+    };
+
+    /**
      * Starts a new timer to that will kick off an election.
      */
     Node.prototype.resetElectionTimer = function () {
-        var electionTimeout = this.model().electionTimeout,
+        var self = this,
+            electionTimeout = this.model().electionTimeout,
             timeout = electionTimeout * (1 + Math.random());
 
+        this.clearElectionTimer();
+        this._electionTimeout = timeout;
         this._electionTimer = this.frame().after(timeout, function() {
-            this.state("candidate");
+            self.state("candidate");
         });
     };
 
@@ -350,15 +408,122 @@ define(["./log_entry"], function (LogEntry) {
      * Clears the election timer.
      */
     Node.prototype.clearElectionTimer = function () {
-        var timerId = (this._electionTimer !== null ? this._electionTimer.id() : 0);
-        this.frame().clearTimer(timerId);
+        this.frame().clearTimer(this.electionTimer());
         this._electionTimer = null;
+        this._electionTimeout = 0;
+    };
+
+
+    //----------------------------------
+    // Request Vote
+    //----------------------------------
+
+    Node.prototype.sendRequestVoteRequests = function () {
+        var self = this;
+        this.cluster().forEach(function(id) {
+            var target = self.model().nodes.find(id);
+            if (target !== null && target.id !== self.id) {
+                self.sendRequestVoteRequest(target);
+            }
+        });
+    };
+
+    Node.prototype.sendRequestVoteRequest = function (target) {
+        var self  = this,
+            frame = this.frame(),
+            prevEntry = this._log[this._log.length-1],
+            req   = {
+                type: "RVREQ",
+                term: this.currentTerm(),
+                candidateId: this.id,
+                lastLogIndex: (prevEntry !== undefined ? prevEntry.index : 0),
+                lastLogTerm: (prevEntry !== undefined ? prevEntry.term : 0),
+            };
+
+        return this.model().send(this, target, req, function() {
+            target.recvRequestVoteRequest(self, req);
+        });
+    };
+
+    /**
+     * Receiver Implementation:
+     *
+     *   - Reply false if term < currentTerm (§5.1).
+     *
+     *   - If votedFor is null or candidateId, and candidate's log is at
+     *     least as up-to-date as receiver's log, grant vote (§5.2, §5.4).
+     */
+    Node.prototype.recvRequestVoteRequest = function (source, req) {
+        var self  = this,
+            frame = this.frame(),
+            prevLogEntry = this._log[this._log.length-1],
+            prevLogIndex = (prevLogEntry !== undefined ? prevLogEntry.index : 0),
+            prevLogTerm  = (prevLogEntry !== undefined ? prevLogEntry.term : 0),
+            voteGranted = true;
+
+        this.currentTerm(req.term);
+
+        // Reply false if term < currentTerm (§5.1).
+        if (req.term < this.currentTerm()) {
+            voteGranted = false;
+        }
+        // Reply false if already voted for another candidate.
+        else if (this._votedFor !== null && this._votedFor !== req.candidateId) {
+            voteGranted = false;
+        }
+        // Reply false if candidate's log is not at least as up-to-date as receiver's log.
+        else if (req.lastLogTerm < prevLogTerm || (req.lastLogTerm === prevLogTerm && req.lastLogIndex < prevLogIndex)) {
+            voteGranted = false;
+        }
+
+        if (voteGranted) {
+            // Vote for candidate.
+            this._votedFor = req.candidateId;
+
+            // Reset election timeout.
+            this.resetElectionTimer();
+        }
+
+        // Send response.
+        var resp = {
+            type:"RVRSP",
+            term: this.currentTerm(),
+            voteGranted: voteGranted,
+        };
+        return this.model().send(this, source, resp, function() {
+            source.recvRequestVoteResponse(self, req, resp);
+        });
+    };
+
+    Node.prototype.recvRequestVoteResponse = function (source, req, resp) {
+        var quorumSize = Math.ceil(this._cluster.length / 2);
+
+        this.currentTerm(resp.term);
+
+        if (resp.voteGranted) {
+            this._voteCount += 1;
+
+            // Promote to leader.
+            if (this._voteCount >= quorumSize) {
+                this.state("leader");
+            }
+        }
     };
 
 
     //----------------------------------
     // Append Entries
     //----------------------------------
+
+    Node.prototype.sendAppendEntriesRequests = function () {
+        var self = this;
+        this.cluster().forEach(function(id) {
+            var target = self.model().nodes.find(id);
+            if (target !== null && target.id !== self.id) {
+                self.sendAppendEntriesRequest(target);
+            }
+        });
+    };
 
     Node.prototype.sendAppendEntriesRequest = function (target) {
         var self  = this,
@@ -444,11 +609,10 @@ define(["./log_entry"], function (LogEntry) {
     /**
      * Clones the node.
      */
-    Node.prototype.clone = function () {
-        var i, clone = new Node();
-        clone.id = this.id;
+    Node.prototype.clone = function (model) {
+        var clone = new Node(model, this.id);
         clone._state = this._state;
-        clone._log = this._log.map(function (entry) { return entry.clone(); });
+        clone._log = this._log.map(function (entry) { return entry.clone(model); });
         return clone;
     };
 

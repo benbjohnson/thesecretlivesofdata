@@ -1,15 +1,16 @@
 
 "use strict";
 /*jslint browser: true, nomen: true*/
-/*global define, tsld*/
+/*global define, tsld, playback*/
 
 define([], function () {
-    function Client(id) {
+    function Client(model, id) {
+        playback.DataObject.call(this, model);
         this.id = id;
         this._value = "";
     }
 
-    Client.prototype = playback.dataObject();
+    Client.prototype = new playback.DataObject();
     Client.prototype.constructor = Client;
 
     /**
@@ -30,9 +31,9 @@ define([], function () {
         return this;
     };
 
-    Client.prototype.clone = function () {
-        var i, clone = new Client();
-        clone.id = this.id;
+    Client.prototype.clone = function (model) {
+        var clone = new Client(model, this.id);
+        clone._value = this._value;
         return clone;
     };
 

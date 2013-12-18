@@ -4,24 +4,17 @@
 /*global define, playback, tsld*/
 
 define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
-    var DEFAULT_SIMULATION_RATE   = (1/20),
-        DEFAULT_NETWORK_LATENCY   = 20 / DEFAULT_SIMULATION_RATE,
-        DEFAULT_HEARTBEAT_TIMEOUT = 50 / DEFAULT_SIMULATION_RATE,
-        DEFAULT_ELECTION_TIMEOUT  = 150 / DEFAULT_SIMULATION_RATE;
-
     function Model() {
+        playback.Model.call(this);
+
         this.title = "";
         this.subtitle = "";
-        this.defaultSimulationRate = DEFAULT_SIMULATION_RATE;
-        this.defaultHeartbeatTimeout = DEFAULT_HEARTBEAT_TIMEOUT;
-        this.defaultElectionTimeout = DEFAULT_ELECTION_TIMEOUT;
-        this.simulationRate = this.defaultSimulationRate;
-        this.heartbeatTimeout = this.defaultHeartbeatTimeout;
-        this.electionTimeout = null;
+        this.heartbeatTimeout = Model.DEFAULT_HEARTBEAT_TIMEOUT;
+        this.electionTimeout = Model.DEFAULT_ELECTION_TIMEOUT;
         this.controls = new Controls(this);
-        this.nodes = playback.set(Node).model(this);
-        this.clients = playback.set(Client).model(this);
-        this.messages = playback.set(Message).model(this);
+        this.nodes = new playback.Set(this, Node);
+        this.clients = new playback.Set(this, Client);
+        this.messages = new playback.Set(this, Message);
         this.latencies = {};
         this.bbox = tsld.bbox(0, 100, 100, 0);
         this.domains = {
@@ -30,7 +23,28 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         };
     }
 
-    Model.prototype = playback.model();
+    Model.prototype = new playback.Model();
+
+    /**
+     * The ratio of simulation time to wall clock time.
+     */
+    Model.SIMULATION_RATE           = (1/50);
+
+    /**
+     * The default network latency between two nodes if not set.
+     */
+    Model.DEFAULT_NETWORK_LATENCY   = 20 / Model.SIMULATION_RATE;
+
+    /**
+     * The default heartbeat timeout for the model.
+     */
+    Model.DEFAULT_HEARTBEAT_TIMEOUT = 50 / Model.SIMULATION_RATE;
+
+    /**
+     * The default election timeout for the model.
+     */
+    Model.DEFAULT_ELECTION_TIMEOUT  = 150 / Model.SIMULATION_RATE;
+
 
     /**
      * Finds either a node or client by id.
@@ -131,7 +145,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
             key = [a, b].join("|");
         if (arguments.length === 2) {
             ret = this.latencies[key];
-            return (ret !== undefined ? ret : DEFAULT_NETWORK_LATENCY);
+            return (ret !== undefined ? ret : Model.DEFAULT_NETWORK_LATENCY);
         }
         this.latencies[key] = latency;
         return this;
@@ -158,9 +172,9 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         clone._player = this._player;
         clone.title = this.title;
         clone.subtitle = this.subtitle;
-        clone.nodes = this.nodes.clone().model(clone);
-        clone.clients = this.clients.clone().model(clone);
-        clone.messages = this.messages.clone().model(clone);
+        clone.nodes = this.nodes.clone(clone);
+        clone.clients = this.clients.clone(clone);
+        clone.messages = this.messages.clone(clone);
         clone.bbox = this.bbox;
         clone.domains = {
             x: this.domains.x,

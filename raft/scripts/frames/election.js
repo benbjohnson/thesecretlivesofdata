@@ -12,7 +12,6 @@ define([], function () {
             node = function(id) { return frame.model().nodes.find(id); },
             wait = function() { var self = this; model().controls.show(function() { self.stop(); }); };
 
-        /*
         frame.after(1, function() {
             model().clear();
             layout.invalidate();
@@ -21,24 +20,26 @@ define([], function () {
             frame.model().title = '<h2 style="visibility:visible">Leader Election</h1>'
                                 + '<br/>' + frame.model().controls.html();
             layout.invalidate();
-            this.after(200, function () { model().controls.show(); })
         })
-
+        .after(200, wait).indefinite()
         .after(500, function () {
             model().title = "";
             layout.invalidate();
         })
-        */
-        frame.after(300, function () {
-            model().nodes.create("a");
-            model().nodes.create("b");
-            model().nodes.create("c");
+
+        .after(300, function () {
+            model().nodes.create("a").init();
+            model().nodes.create("b").init();
+            model().nodes.create("c").init();
+            node("a").cluster(["a", "b", "c"]);
+            node("b").cluster(["a", "b", "c"]);
+            node("c").cluster(["a", "b", "c"]);
             model().subtitle = '<h2>In Raft there are two timeout settings which control elections.</h2>'
                            + model().controls.html();
             layout.invalidate();
-            this.after(200, function () { model().controls.show(); })
         })
-        .after(300, function () {
+        .after(200, wait).indefinite()
+        .after(100, function () {
             node("b").state("leader");
             model().subtitle = '<h2>The <span style="color:green">heartbeat timeout</span> is the interval at which a leader sends heartbeats to followers.</h2>'
                            + model().controls.html();

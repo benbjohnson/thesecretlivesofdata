@@ -4,13 +4,14 @@
 /*global define, d3, tsld*/
 
 define([], function () {
-    function LogEntry(index, term, command) {
+    function LogEntry(model, index, term, command) {
+        playback.DataObject.call(this, model);
         this.index = index;
         this.term = term;
         this.command = command;
     }
 
-    LogEntry.prototype = playback.dataObject();
+    LogEntry.prototype = new playback.DataObject();
     LogEntry.prototype.constructor = LogEntry;
 
     /**
@@ -38,8 +39,8 @@ define([], function () {
         }
     };
 
-    LogEntry.prototype.clone = function () {
-        var clone = new LogEntry();
+    LogEntry.prototype.clone = function (model) {
+        var clone = new LogEntry(model);
         clone.index = this.index;
         clone.term = this.term;
         clone.command = this.command;

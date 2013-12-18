@@ -141,7 +141,8 @@ define([], function () {
     NodeLayout.prototype.invalidateElectionTimers = function () {
         var self = this,
             model = this.parent().model(),
-            nodes = this.nodes();
+            nodes = this.nodes(),
+            electionAt = function (d) { return d.electionTimer() !== null ? d.electionTimer().startTime() : 0; };
 
         this.g().selectAll(".node").data(nodes, function (d) { return d.id; })
             .call(function () {
@@ -149,8 +150,8 @@ define([], function () {
                     .attr("d", function(d) {
                         var r = (!isNaN(d.r) ? d.r : 0);
                         var pct = 0.0;
-                        if (d.electionAt > 0 && d.electionTimeout > 0) {
-                            pct = 1.0 - Math.min(1, Math.max(0, ((d.electionAt - model.playhead()) / d.electionTimeout)));
+                        if (electionAt(d) > 0) {
+                            pct = 1.0 - Math.min(1, Math.max(0, ((electionAt(d) - model.playhead()) / d.electionTimeout())));
                         }
                         return d3.svg.arc()
                             .innerRadius(self.parent().scales.r(r - 1))

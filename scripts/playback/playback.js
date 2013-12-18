@@ -641,8 +641,8 @@ var EventDispatcher = require('./event_dispatcher');
 /**
  * Initializes a new DataObject instance.
  */
-function DataObject() {
-    this._model = null;
+function DataObject(model) {
+    this._model = (model !== undefined ? model : null);
 }
 
 DataObject.prototype = new EventDispatcher();
@@ -966,9 +966,10 @@ Frame.prototype.timers = function () {
  * Stops a timer with the given identifier.
  */
 Frame.prototype.clearTimer = function (value) {
-    var i;
+    var i,
+        id = (is.object(value) ? value.id() : value);
     for (i = 0; i < this._timers.length; i += 1) {
-        if (this._timers[i] === value || this._timers[i].id() === value) {
+        if (this._timers[i].id() === id) {
             this._timers[i].stop();
         }
     }
@@ -1237,39 +1238,17 @@ var DataObject = require('./data_object'),
 function Playback() {
 }
 
+Playback.prototype.DataObject = DataObject;
+Playback.prototype.Layout     = Layout;
+Playback.prototype.Model      = Model;
+Playback.prototype.Player     = Player;
+Playback.prototype.Set        = Set;
+
 /**
  * Creates a new player.
  */
 Playback.prototype.player = function () {
     return new Player();
-};
-
-/**
- * Retrieves the layout superclass.
- */
-Playback.prototype.layout = function () {
-    return new Layout();
-};
-
-/**
- * Retrieves the data object superclass.
- */
-Playback.prototype.dataObject = function () {
-    return new DataObject();
-};
-
-/**
- * Retrieves the model superclass.
- */
-Playback.prototype.model = function () {
-    return new Model();
-};
-
-/**
- * Retrieves a set instance.
- */
-Playback.prototype.set = function (clazz) {
-    return new Set(clazz);
 };
 
 module.exports = Playback;
@@ -1731,8 +1710,8 @@ var DataObject = require('./data_object'),
  * A Set is a collection of unique objects where uniqueness is
  * determined by the "id" property.
  */
-function Set(clazz) {
-    DataObject.call(this);
+function Set(model, clazz) {
+    DataObject.call(this, model);
     this.clazz(clazz);
     this._elements = [];
 }
@@ -1792,8 +1771,7 @@ Set.prototype.create = function (id) {
     }
 
     // Otherwise create a new element and add it.
-    element = (new this._clazz(id));
-    element.model(this.model());
+    element = new this._clazz(this.model(), id);
     this.add(element);
     return element;
 };
@@ -1913,12 +1891,11 @@ Set.prototype.empty = function () {
  *
  * @return {Set}
  */
-Set.prototype.clone = function () {
+Set.prototype.clone = function (model) {
     var i,
         self = this,
-        clone = new Set();
-    clone._clazz = this._clazz;
-    clone._elements = this._elements.map(function (element) { return element.clone(); });
+        clone = new Set(model, this._clazz);
+    clone._elements = this._elements.map(function (element) { return element.clone(model); });
     return clone;
 };
 

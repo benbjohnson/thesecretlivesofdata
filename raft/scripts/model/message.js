@@ -6,17 +6,21 @@
 define([], function () {
     var nextId = 0;
 
-    function Message(id) {
-        nextId += 1;
-        this.id = nextId;
+    function Message(model, id) {
+        playback.DataObject.call(this, model);
+        this.id = (id === undefined ? nextId : 0);
         this.source = null;
         this.target = null;
         this.sendTime = 0;
         this.recvTime = 0;
         this.text = "";
+
+        if (id === undefined) {
+            nextId += 1;
+        }
     }
 
-    Message.prototype = playback.dataObject();
+    Message.prototype = new playback.DataObject();
     Message.prototype.constructor = Message;
 
     /**
@@ -33,8 +37,8 @@ define([], function () {
         return tsld.bbox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
     };
 
-    Message.prototype.clone = function () {
-        var i, clone = new Message();
+    Message.prototype.clone = function (model) {
+        var i, clone = new Message(model);
         clone.id       = this.id;
         clone.source   = this.source;
         clone.target   = this.target;
