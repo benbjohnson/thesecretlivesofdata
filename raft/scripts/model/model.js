@@ -9,6 +9,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
 
         this.title = "";
         this.subtitle = "";
+        this.defaultNetworkLatency = Model.DEFAULT_NETWORK_LATENCY;
         this.heartbeatTimeout = Model.DEFAULT_HEARTBEAT_TIMEOUT;
         this.electionTimeout = Model.DEFAULT_ELECTION_TIMEOUT;
         this.controls = new Controls(this);
@@ -24,6 +25,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
     }
 
     Model.prototype = new playback.Model();
+    Model.prototype.constructor = Model;
 
     /**
      * The ratio of simulation time to wall clock time.
@@ -145,23 +147,40 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
             key = [a, b].join("|");
         if (arguments.length === 2) {
             ret = this.latencies[key];
-            return (ret !== undefined ? ret : Model.DEFAULT_NETWORK_LATENCY);
+            return (ret !== undefined ? ret : this.defaultNetworkLatency);
         }
         this.latencies[key] = latency;
         return this;
     };
 
     /**
-     * Retrieves the playhead for the next election.
+     * Updates the election timers to ensure that only one will become candidate.
      */
-    Model.prototype.nextElectionAt = function () {
-        var playhead = null;
-        this.nodes.toArray().forEach(function(node) {
-            if (playhead === null || node.electionAt < playhead) {
-                playhead = node.electionAt;
+    Model.prototype.ensureSingleCandidate = function () {
+        var self = this,
+            minTime = null,
+            candidateId = null,
+            nodes = this.nodes.toArray().filter(function (node) { return node.electionTimer() !== null; });
+
+        // Find earliest candidate.
+        nodes.forEach(function (node) {
+            var startTime = node.electionTimer().startTime();
+            if (minTime === null || startTime < minTime) {
+                minTime = startTime;
+                candidateId = node.id;
             }
-        })
-        return playhead;
+        });
+
+        // Extend other candidate timers.
+        nodes.forEach(function (node) {
+            var minStartTime = minTime + self.defaultNetworkLatency * 1.25,
+                startTime = node.electionTimer().startTime();
+            if (node.id !== candidateId && startTime < minStartTime) {
+                node.electionTimer().startTime(minStartTime);
+            }
+        });        
+
+        return candidateId;
     };
 
     /**

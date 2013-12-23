@@ -105,7 +105,7 @@ define(["./log_entry"], function (LogEntry) {
      * Sets or retrieve the current commit index.
      */
     Node.prototype.commitIndex = function (value) {
-        var i;
+        var i, prevValue = this._commitIndex;
         if (arguments.length === 0) {
             return this._commitIndex;
         }
@@ -116,6 +116,7 @@ define(["./log_entry"], function (LogEntry) {
                 this._log[i].applyTo(this);
             }
             this._commitIndex = value;
+            this.dispatchChangeEvent("commitIndexChange", value, prevValue);
         }
 
         return this;
@@ -201,12 +202,14 @@ define(["./log_entry"], function (LogEntry) {
         if (arguments.length === 0) {
             return this._currentTerm;
         }
-        var changed = (value > this._currentTerm);
+        var changed = (value > this._currentTerm),
+            prevValue = this._currentTerm;
         if (changed) {
             this._currentTerm = value;
             this._votedFor = null;
             this._voteCount = 0;
             this.state("follower");
+            this.dispatchChangeEvent("currentTermChange", value, prevValue);
         }
         return this._value;
     };
@@ -215,10 +218,12 @@ define(["./log_entry"], function (LogEntry) {
      * Sets or retrieves the node state.
      */
     Node.prototype.state = function (value) {
+        var prevValue = this._state;
         if (arguments.length === 0) {
             return this._state;
         }
         this._state = value;
+        this.dispatchChangeEvent("stateChange", value, prevValue);
 
         // Begin event loop for this node.
         switch (this._state) {
@@ -358,7 +363,7 @@ define(["./log_entry"], function (LogEntry) {
             this.clearHeartbeatTimer();
             this._heartbeatTimer = this.frame().timer(function() {
                 self.sendAppendEntriesRequests();
-            }).interval(timeout).delay(timeout);
+            }).interval(timeout).delay(1);
         }
     };
 
@@ -426,6 +431,7 @@ define(["./log_entry"], function (LogEntry) {
                 self.sendRequestVoteRequest(target);
             }
         });
+        this.dispatchChangeEvent("requestVoteRequestsSent");
     };
 
     Node.prototype.sendRequestVoteRequest = function (target) {
@@ -439,6 +445,8 @@ define(["./log_entry"], function (LogEntry) {
                 lastLogIndex: (prevEntry !== undefined ? prevEntry.index : 0),
                 lastLogTerm: (prevEntry !== undefined ? prevEntry.term : 0),
             };
+
+        this.dispatchChangeEvent("requestVoteRequestSent", req);
 
         return this.model().send(this, target, req, function() {
             target.recvRequestVoteRequest(self, req);
@@ -490,6 +498,10 @@ define(["./log_entry"], function (LogEntry) {
             term: this.currentTerm(),
             voteGranted: voteGranted,
         };
+
+        this.dispatchChangeEvent("requestVoteRequestReceived", req);
+        this.dispatchChangeEvent("requestVoteResponseSent", resp);
+
         return this.model().send(this, source, resp, function() {
             source.recvRequestVoteResponse(self, req, resp);
         });
@@ -508,6 +520,8 @@ define(["./log_entry"], function (LogEntry) {
                 this.state("leader");
             }
         }
+
+        this.dispatchChangeEvent("requestVoteResponseReceived", resp);
     };
 
 
@@ -523,6 +537,7 @@ define(["./log_entry"], function (LogEntry) {
                 self.sendAppendEntriesRequest(target);
             }
         });
+        this.dispatchChangeEvent("appendEntriesRequestsSent");
     };
 
     Node.prototype.sendAppendEntriesRequest = function (target) {
@@ -539,6 +554,8 @@ define(["./log_entry"], function (LogEntry) {
                 log: this._log.slice(nextIndex),
                 leaderCommit: this.commitIndex(),
             };
+
+        this.dispatchChangeEvent("appendEntriesRequestSent", req);
 
         return this.model().send(this, target, req, function() {
             target.recvAppendEntriesRequest(self, req);
@@ -587,6 +604,10 @@ define(["./log_entry"], function (LogEntry) {
             success: success,
         };
         resp.nextIndex = (this._log.length > 0 ? this._log[this._log.length-1].index : 0);
+
+        this.dispatchChangeEvent("appendEntriesRequestReceived", req);
+        this.dispatchChangeEvent("appendEntriesResponseSent", resp);
+
         return this.model().send(this, source, resp, function() {
             source.recvAppendEntriesResponse(self, req, resp);
         });
@@ -599,12 +620,22 @@ define(["./log_entry"], function (LogEntry) {
             this.nextIndex(source.id, req.log[req.log.length-1].index + 1);
             this.matchIndex(source.id, req.log[req.log.length-1].index);
         }
+
+        this.dispatchChangeEvent("appendEntriesResponseReceived", resp);
     };
 
 
     //----------------------------------
     // Utility
     //----------------------------------
+
+    /**
+     * Dispatches the event from the node and from the model.
+     */
+    Node.prototype.dispatchEvent = function (event) {
+        playback.DataObject.prototype.dispatchEvent.call(this, event);
+        this.model().dispatchEvent(event);
+    };
 
     /**
      * Clones the node.

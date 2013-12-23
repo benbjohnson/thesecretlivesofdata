@@ -10,7 +10,8 @@ define([], function () {
             model = function() { return frame.model(); },
             client = function(id) { return frame.model().clients.find(id); },
             node = function(id) { return frame.model().nodes.find(id); },
-            wait = function() { var self = this; model().controls.show(function() { self.stop(); }); };
+            wait = function() { var self = this; model().controls.show(function() { self.stop(); }); },
+            subtitle = function(s, pause) { model().subtitle = s + model().controls.html(); layout.invalidate(); if (pause === undefined) { model().controls.show() }; };
 
         frame.after(1, function() {
             model().clear();
@@ -34,60 +35,55 @@ define([], function () {
             node("a").cluster(["a", "b", "c"]);
             node("b").cluster(["a", "b", "c"]);
             node("c").cluster(["a", "b", "c"]);
+            model().ensureSingleCandidate();
             model().subtitle = '<h2>In Raft there are two timeout settings which control elections.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
-        .after(200, wait).indefinite()
+        .after(model().electionTimeout / 2, function() { model().controls.show(); })
         .after(100, function () {
-            node("b").state("leader");
-            model().subtitle = '<h2>The <span style="color:green">heartbeat timeout</span> is the interval at which a leader sends heartbeats to followers.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+            subtitle('<h2>First is the <span style="color:green">election timeout</span>.</h2>');
         })
-        .after(200, wait).indefinite()
-        .after(100, function () {
-            model().subtitle = '<h2>The heartbeat timeout is typically between 0.5ms and 20ms.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+        .after(1, function() {
+            subtitle('<h2>The election timeout is the amount of time a follower waits until becoming a candidate.</h2>');
         })
-        .after(200, wait).indefinite()
-        .after(300, function () {
-            model().electionTimeout = model().defaultElectionTimeout;
-            model().subtitle = '<h2>The <span style="color:green">election timeout</span> is the amount of time a follower will wait before starting an election.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+        .after(1, function() {
+            subtitle('<h2>The election timeout is a random number between 150ms and 300ms.</h2>');
         })
-        .after(200, wait).indefinite()
-        .after(300, function () {
-            model().subtitle = '<h2>This election timeout is reset whenever a follower receives a heartbeat.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+        .after(1, function() {
+            subtitle("", false);
         })
-        .after(200, wait).indefinite()
-        .after(100, function () {
-            model().subtitle = '<h2>The election timeout is typically between 10ms and 500ms.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+        .at(model(), "stateChange", function(event) {
+            return (event.target.state() === "candidate");
         })
-        .after(200, wait).indefinite()
-        .after(100, function () {
-            node("b").state("stopped");
-            model().subtitle = '<h2>If a follower hears no heartbeats within an election timeout then it will become a <strong>candidate</strong>.</h2>'
-                           + model().controls.html();
-            layout.invalidate();
+        .after(1, function () {
+            subtitle('<h2>Once a follower becomes a candidate it starts a new <em>election term</em>...</h2>');
         })
-        .after(model().heartbeatTimeout + 100, function () {
-            var electionAt = model().nextElectionAt();
-            this.after(electionAt - frame.playhead(), function () {
-                model().subtitle = '<h2>When a node becomes a candidate it will request votes from other nodes.</h2>'
-                               + model().controls.html();
-                model().controls.show();
-            });
+        .after(model().defaultNetworkLatency * 0.25, function () {
+            subtitle('<h2>...and sends out <em>Request Vote</em> requests to other nodes.</h2>');
         })
-        .after(model().electionTimeout * 2, function () {
+        .after(model().defaultNetworkLatency, function () {
+            subtitle('<h2>If the receiving node hasn\'t voted yet in this term then it votes for the candidate...</h2>');
+        })
+        .after(1, function () {
+            subtitle('<h2>...and the node resets its election timeout.</h2>');
+        })
+        .at(model(), "stateChange", function(event) {
+            return (event.target.state() === "leader");
+        })
+        .after(1, function () {
+            subtitle('<h2>Once a candidate has a majority of votes it becomes leader.</h2>');
+        })
+        .after(model().defaultNetworkLatency * 0.25, function () {
+            subtitle('<h2>The leader begins sending out <em>Append Entries</em> requests to its followers.</h2>');
+        })
+        .after(1, function () {
+            subtitle('<h2>These requests are sent in intervals specified by the <span style="color:red">heartbeat timeout</span>.</h2>');
+        })
+        .after(model().defaultNetworkLatency, function () {
+            subtitle('<h2>Followers respond to the <em>Append Entries</em> requests .</h2>');
+        })
 
-        })
 
         player.play();
     };

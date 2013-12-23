@@ -642,6 +642,7 @@ var EventDispatcher = require('./event_dispatcher');
  * Initializes a new DataObject instance.
  */
 function DataObject(model) {
+    EventDispatcher.call(this);
     this._model = (model !== undefined ? model : null);
 }
 
@@ -688,9 +689,11 @@ require.register("playback/lib/event.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
-function Event(type) {
+function Event(type, value, prevValue) {
     this.type = type;
     this.target = null;
+    this.value = value;
+    this.prevValue = prevValue;
 }
 
 module.exports = Event;
@@ -700,6 +703,8 @@ require.register("playback/lib/event_dispatcher.js", function(exports, require, 
 
 "use strict";
 /*jslint browser: true, nomen: true*/
+
+var Event = require('./event');
 
 /**
  * EventDispatcher is a subclass for any objects that want to dispatch
@@ -753,13 +758,29 @@ EventDispatcher.prototype.removeEventListener = function (type, listener) {
 EventDispatcher.prototype.dispatchEvent = function (event) {
     var i, listeners = this._eventListeners[event.type];
 
-    event.target = this;
+    // Only update the target if this is the first dispatch.
+    if (event.target === null || event.target === undefined) {
+        event.target = this;
+    }
 
     if (listeners !== undefined) {
         for (i = 0; i < listeners.length; i += 1) {
             listeners[i](event);
         }
     }
+    return this;
+};
+
+/**
+ * Ease-of-use function to dispatch a change event with the value and previous value.
+ *
+ * @param {String}
+ * @param {Object}
+ * @param {Object}
+ */
+EventDispatcher.prototype.dispatchChangeEvent = function (eventType, value, prevValue) {
+    var event = new Event(eventType, value, prevValue);
+    return this.dispatchEvent(event);
 };
 
 module.exports = EventDispatcher;
@@ -892,12 +913,19 @@ Frame.prototype.playhead = function (value) {
             timer.run();
         }
 
+        // Stop moving the playhead forward if a timer paused the player.
+        if (this.player() !== null && this.player().rate() === 0) {
+            break;
+        }
+
         // Move playhead forward to at least make some progress.
         this._playhead += 1;
     }
 
-    // Set the final value of the playhead to what was passed in.
-    this._playhead = value;
+    // Set the final value of the playhead to what was passed in if still playing.
+    if (this.player() === null || this.player().rate() > 0) {
+        this._playhead = value;
+    }
     this._duration = Math.max(this._duration, this._playhead);
 
     return this;
@@ -1170,12 +1198,18 @@ require.register("playback/lib/model.js", function(exports, require, module){
 "use strict";
 /*jslint browser: true, nomen: true*/
 
+var EventDispatcher = require('./event_dispatcher');
+
 /**
  * Initializes a new Model instance.
  */
 function Model() {
+    EventDispatcher.call(this);
     this._player = null;
 }
+
+Model.prototype = new EventDispatcher();
+Model.prototype.constructor = Model;
 
 /**
  * Sets or retrieves the player the model is attached to.
@@ -2060,6 +2094,27 @@ Timer.prototype.then = function (fn) {
  */
 Timer.prototype.after = function (delay, fn) {
     return this.then(fn).delay(delay);
+};
+
+/**
+ * Creates a timer that runs at the next event of a given type.
+ *
+ * @param {Object}
+ * @param {String}
+ * @param {Function}
+ * @return {Timer}
+ */
+Timer.prototype.at = function (target, eventType, fn) {
+    return this.then(function () {
+        var timer = this;
+        target.addEventListener(eventType, function (event) {
+            var ret = fn(event);
+            if (ret !== false) {
+                target.removeEventListener(eventType, fn);
+                timer.stop();
+            }
+        });
+    }).indefinite();
 };
 
 /**
