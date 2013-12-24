@@ -671,7 +671,6 @@ DataObject.prototype.player = function () {
     return (this._model !== null ? this._model.player() : null);
 };
 
-
 /**
  * Retrieves the current frame.
  *
@@ -679,6 +678,15 @@ DataObject.prototype.player = function () {
  */
 DataObject.prototype.frame = function () {
     return (this._model !== null ? this._model.frame() : null);
+};
+
+/**
+ * Retrieves the layout.
+ *
+ * @return {Layout}
+ */
+DataObject.prototype.layout = function () {
+    return (this.frame() !== null ? this.frame().layout() : null);
 };
 
 module.exports = DataObject;
@@ -765,7 +773,7 @@ EventDispatcher.prototype.dispatchEvent = function (event) {
 
     if (listeners !== undefined) {
         for (i = 0; i < listeners.length; i += 1) {
-            listeners[i](event);
+            listeners[i].call(null, event);
         }
     }
     return this;

@@ -154,6 +154,24 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
     };
 
     /**
+     * Returns the current leader.
+     */
+    Model.prototype.leader = function () {
+        return this.nodes.toArray().filter(function (node) {
+            return node.state() === "leader";
+        }).shift();
+    };
+
+    /**
+     * Returns the current candidates.
+     */
+    Model.prototype.candidates = function () {
+        return this.nodes.toArray().filter(function (node) {
+            return node.state() === "candidate";
+        });
+    };
+
+    /**
      * Updates the election timers to ensure that only one will become candidate.
      */
     Model.prototype.ensureSingleCandidate = function () {

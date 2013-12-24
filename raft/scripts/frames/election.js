@@ -48,7 +48,7 @@ define([], function () {
             subtitle('<h2>The election timeout is the amount of time a follower waits until becoming a candidate.</h2>');
         })
         .after(1, function() {
-            subtitle('<h2>The election timeout is a random number between 150ms and 300ms.</h2>');
+            subtitle('<h2>The election timeout is randomized to be between 150ms and 300ms.</h2>');
         })
         .after(1, function() {
             subtitle("", false);
@@ -59,8 +59,11 @@ define([], function () {
         .after(1, function () {
             subtitle('<h2>Once a follower becomes a candidate it starts a new <em>election term</em>...</h2>');
         })
+        .after(1, function () {
+            subtitle('<h2>...votes for itself...</h2>');
+        })
         .after(model().defaultNetworkLatency * 0.25, function () {
-            subtitle('<h2>...and sends out <em>Request Vote</em> requests to other nodes.</h2>');
+            subtitle('<h2>...and sends out <em>Request Vote</em> messages to other nodes.</h2>');
         })
         .after(model().defaultNetworkLatency, function () {
             subtitle('<h2>If the receiving node hasn\'t voted yet in this term then it votes for the candidate...</h2>');
@@ -75,14 +78,42 @@ define([], function () {
             subtitle('<h2>Once a candidate has a majority of votes it becomes leader.</h2>');
         })
         .after(model().defaultNetworkLatency * 0.25, function () {
-            subtitle('<h2>The leader begins sending out <em>Append Entries</em> requests to its followers.</h2>');
+            subtitle('<h2>The leader begins sending out <em>Append Entries</em> messages to its followers.</h2>');
         })
         .after(1, function () {
-            subtitle('<h2>These requests are sent in intervals specified by the <span style="color:red">heartbeat timeout</span>.</h2>');
+            subtitle('<h2>These messages are sent in intervals specified by the <span style="color:red">heartbeat timeout</span>.</h2>');
         })
         .after(model().defaultNetworkLatency, function () {
-            subtitle('<h2>Followers respond to the <em>Append Entries</em> requests .</h2>');
+            subtitle('<h2>Followers then respond to each <em>Append Entries</em> message.</h2>');
         })
+        .after(1, function () {
+            subtitle('', false);
+        })
+        .after(model().heartbeatTimeout * 2, function () {
+            subtitle('<h2>This election term will continue until a follower stops receiving heartbeats and becomes a candidate.</h2>', false);
+        })
+        .after(100, wait).indefinite()
+        .after(1, function () {
+            subtitle('', false);
+        })
+        .after(model().heartbeatTimeout * 2, function () {
+            subtitle('<h2>Let\'s stop the leader and watch a re-election happen.</h2>', false);
+        })
+        .after(100, wait).indefinite()
+        .after(1, function () {
+            subtitle('', false);
+            model().leader().state("stopped")
+        })
+        .after(model().defaultNetworkLatency, function () {
+            model().ensureSingleCandidate()
+        })
+        .at(model(), "stateChange", function(event) {
+            return (event.target.state() === "leader");
+        })
+        .after(1, function () {
+            subtitle('<h2>...</h2>', false);
+        })
+        .after(1, wait).indefinite()
 
 
         player.play();

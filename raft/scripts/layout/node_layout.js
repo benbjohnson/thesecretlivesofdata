@@ -75,6 +75,10 @@ define([], function () {
                     .attr("fill", "white")
                     .attr("dominant-baseline", "middle")
                     .attr("text-anchor", "middle");
+                g.append("text")
+                    .attr("class", "node-description")
+                    .attr("dominant-baseline", "middle")
+                    .attr("text-anchor", "middle");
                 g.append("g").attr("class", "log")
 
                 g = this;
@@ -89,8 +93,40 @@ define([], function () {
                 g.select("text.node-value")
                     .attr("font-size", function(d) { return self.parent().scales.font(12)})
                     .text(function (d) { return d.value(); });
+                g.select("text.node-description")
+                    .attr("font-family", "Courier New")
+                    .attr("font-size", function(d) { return self.parent().scales.font(8)});
 
                 g.each(function(node) {
+                    // Description.
+                    var desc = [];
+                    desc.push("Node \"" + node.id + "\"");
+                    desc.push("Term: " + node.currentTerm());
+                    desc.push();
+                    if (node.state() === "candidate") {
+                        desc.push("Vote Count: " + node.voteCount());
+                    } else if (node.leaderId() !== null) {
+                        desc.push("Leader: \"" + node.leaderId() + "\"");
+                    } else if (node.state() === "follower" && node.votedFor() !== null) {
+                        desc.push("Voted For: \"" + node.votedFor() + "\"");
+                    }
+                    d3.select(this).select("text.node-description")
+                        .attr("y", function (d) {
+                            if (d.ypos === "bottom") {
+                                return self.parent().scales.r(d.r + 3);
+                            } else {
+                                return (self.parent().scales.r(d.r + 3) * -1) - (desc.length * self.parent().scales.y(3));
+                            }
+                        })
+                        .selectAll("tspan").data(desc)
+                        .call(function() {
+                            this.enter().append("tspan").attr("x", 0);
+                            this.attr("dy", function (d) { return self.parent().scales.y(3); })
+                                .text(function (d) { return d; });
+                            this.exit().remove();
+                        })
+
+                    // Log
                     d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log())
                         .call(function() {
                             var transform = function(d) { return "translate(" + self.parent().scales.size(d.dx) + "," + self.parent().scales.size(d.dy) + ")"};
@@ -154,8 +190,8 @@ define([], function () {
                             pct = 1.0 - Math.min(1, Math.max(0, ((electionAt(d) - model.playhead()) / d.electionTimeout())));
                         }
                         return d3.svg.arc()
-                            .innerRadius(self.parent().scales.r(r - 1))
-                            .outerRadius(self.parent().scales.r(r) + 1)
+                            .innerRadius(self.parent().scales.r(r - 1 - (d.state() === "candidate" ? 2 : 0)))
+                            .outerRadius(self.parent().scales.r(r - (d.state() === "candidate" ? 2 : 0)) + 1)
                             .startAngle(0)
                             .endAngle((2 * Math.PI) * pct)
                             .call(d);
@@ -183,6 +219,8 @@ define([], function () {
                 node = nodes[i];
                 node.x = x + (w / 2) + ((w / 2) * Math.cos(angle));
                 node.y = y + (h / 2) + ((w / 1.125) * Math.sin(angle));
+                node.xpos = (Math.cos(angle) > 0 ? "right" : "left")
+                node.ypos = (Math.sin(angle) > 0 ? "bottom" : "top");
                 angle += step;
             }
         }

@@ -11,6 +11,7 @@ define(["./log_entry"], function (LogEntry) {
         this._cluster = [this];
         this._value = "";
         this._currentTerm = 0;
+        this._leaderId = null;
         this._votedFor = null;
         this._voteCount = null;
         this._commitIndex = 0;
@@ -22,6 +23,12 @@ define(["./log_entry"], function (LogEntry) {
         this._log = [];
         this._heartbeatTimer = null;
         this._electionTimer = null;
+
+        this.addEventListener("stateChange", this.onStateChange);
+        this.addEventListener("leaderIdChange", this.onLeaderIdChange);
+        this.addEventListener("votedForChange", this.onVotedForChange);
+        this.addEventListener("voteCountChange", this.onVoteCountChange);
+        this.addEventListener("currentTermChange", this.onCurrentTermChange);
     }
 
     Node.prototype = new playback.DataObject();
@@ -92,6 +99,27 @@ define(["./log_entry"], function (LogEntry) {
      */
     Node.prototype.value = function () {
         return this._value;
+    };
+
+    /**
+     * Retrieve who the node voted for in this term.
+     */
+    Node.prototype.votedFor = function () {
+        return this._votedFor;
+    };
+
+    /**
+     * Retrieve the number of votes received for this term.
+     */
+    Node.prototype.voteCount = function () {
+        return this._voteCount;
+    };
+
+    /**
+     * Retrieve the current known leader identifier.
+     */
+    Node.prototype.leaderId = function () {
+        return this._leaderId;
     };
 
     /**
@@ -209,6 +237,8 @@ define(["./log_entry"], function (LogEntry) {
             this._votedFor = null;
             this._voteCount = 0;
             this.state("follower");
+            this.dispatchChangeEvent("votedForChange");
+            this.dispatchChangeEvent("voteCountChange");
             this.dispatchChangeEvent("currentTermChange", value, prevValue);
         }
         return this._value;
@@ -223,7 +253,6 @@ define(["./log_entry"], function (LogEntry) {
             return this._state;
         }
         this._state = value;
-        this.dispatchChangeEvent("stateChange", value, prevValue);
 
         // Begin event loop for this node.
         switch (this._state) {
@@ -237,10 +266,14 @@ define(["./log_entry"], function (LogEntry) {
             this.followerEventLoop();
             break;
         case "stopped":
+            this.clearHeartbeatTimer();
+            this.clearElectionTimer();
             break;
         default:
             throw new Error("Invalid node state: " + this._state);
         }
+
+        this.dispatchChangeEvent("stateChange", value, prevValue);
 
         return this;
     };
@@ -317,6 +350,10 @@ define(["./log_entry"], function (LogEntry) {
         // Vote for self.
         this._votedFor = this.id;
         this._voteCount = 1;
+        this._leaderId = null;
+        this.dispatchChangeEvent("leaderIdChange");
+        this.dispatchChangeEvent("votedForChange");
+        this.dispatchChangeEvent("voteCountChange");
 
         // Reset timers.
         this.clearHeartbeatTimer();
@@ -469,6 +506,10 @@ define(["./log_entry"], function (LogEntry) {
             prevLogTerm  = (prevLogEntry !== undefined ? prevLogEntry.term : 0),
             voteGranted = true;
 
+        if (this.state() === "stopped") {
+            return;
+        }
+
         this.currentTerm(req.term);
 
         // Reply false if term < currentTerm (§5.1).
@@ -487,6 +528,7 @@ define(["./log_entry"], function (LogEntry) {
         if (voteGranted) {
             // Vote for candidate.
             this._votedFor = req.candidateId;
+            this.dispatchChangeEvent("votedForChange");
 
             // Reset election timeout.
             this.resetElectionTimer();
@@ -510,15 +552,20 @@ define(["./log_entry"], function (LogEntry) {
     Node.prototype.recvRequestVoteResponse = function (source, req, resp) {
         var quorumSize = Math.ceil(this._cluster.length / 2);
 
+        if (this.state() === "stopped") {
+            return;
+        }
+
         this.currentTerm(resp.term);
 
-        if (resp.voteGranted) {
+        if (resp.voteGranted && this.state() === "candidate") {
             this._voteCount += 1;
 
             // Promote to leader.
             if (this._voteCount >= quorumSize) {
                 this.state("leader");
             }
+            this.dispatchChangeEvent("voteCountChange");
         }
 
         this.dispatchChangeEvent("requestVoteResponseReceived", resp);
@@ -568,6 +615,10 @@ define(["./log_entry"], function (LogEntry) {
             prevEntry = this._log[req.prevLogIndex-1],
             success = true;
 
+        if (this.state() === "stopped") {
+            return;
+        }
+
         this.currentTerm(req.term);
 
         // Reply false if term < currentTerm (§5.3).
@@ -581,6 +632,10 @@ define(["./log_entry"], function (LogEntry) {
         }
 
         if (success) {
+            // Update leader.
+            this._leaderId = req.leaderId;
+            this.dispatchChangeEvent("leaderIdChange");
+
             // If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it (§5.3).
             // Append any new entries not already in the log.
             if (req.log.length > 0) {
@@ -614,6 +669,10 @@ define(["./log_entry"], function (LogEntry) {
     };
 
     Node.prototype.recvAppendEntriesResponse = function (source, req, resp) {
+        if (this.state() === "stopped") {
+            return;
+        }
+
         this.currentTerm(resp.term);
 
         if (resp.success && req.log.length > 0) {
@@ -622,6 +681,31 @@ define(["./log_entry"], function (LogEntry) {
         }
 
         this.dispatchChangeEvent("appendEntriesResponseReceived", resp);
+    };
+
+
+    //----------------------------------
+    // Event Handlers
+    //----------------------------------
+
+    Node.prototype.onStateChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onLeaderIdChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onVotedForChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onVoteCountChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onCurrentTermChange = function (event) {
+        event.target.layout().invalidate();
     };
 
 
