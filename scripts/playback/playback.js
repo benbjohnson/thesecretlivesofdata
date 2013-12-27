@@ -819,9 +819,9 @@ function Frame(id, title, fn) {
     this._fn = fn;
     this._player = null;
     this._playhead = 0;
-    this._duration = 0;
     this._model = null;
     this._timers = [];
+    this._executedTimers = {};
     this._snapshots = [];
 }
 
@@ -888,8 +888,11 @@ Frame.prototype.player = function (value) {
  *
  * @return {Boolean}
  */
-Frame.prototype.playhead = function (value) {
-    var self = this, i, timer, timers;
+Frame.prototype.playhead = function (v) {
+    var i, timers, nextTimerAt,
+        self = this,
+        value = Math.ceil(v);
+
     if (arguments.length === 0) {
         return this._playhead;
     }
@@ -897,54 +900,51 @@ Frame.prototype.playhead = function (value) {
         return this;
     }
 
+    this.removeStaleTimers();
+
     // Execute timers between previous playhead position and current.
-    this._playhead += 1;
     while (true) {
-        timers = this.timers();
-        if (timers.length === 0) {
-            break;
-        }
-
-        // Find next playhead position.
-        this._playhead = timers[0].until(this._playhead);
-        if (this._playhead > value) {
-            break;
-        }
-        this._duration = Math.max(this._duration, this._playhead);
-
-        // Run all timers at that position.
-        for (i = 0; i < timers.length; i += 1) {
-            timer = timers[i];
-            if (i > 0 && timer.until(this._playhead) !== this._playhead) {
+        // Continue executing timers at this playhead position until there are
+        // none left. This can loop multiple times if timers are created without
+        // a delay. This can go in an infinite loop if a timer keeps creating 
+        // new undelayed timers that create other new undelayed timers.
+        while (true) {
+            timers = this.currentTimers();
+            if (timers.length === 0) {
                 break;
             }
-            timer.run();
+
+            // Run all timers the current playhead position.
+            for (i = 0; i < timers.length; i += 1) {
+                timers[i].run();
+                this._executedTimers[timers[i].id()] = true;
+            }
+            this.removeStaleTimers();
         }
+
 
         // Stop moving the playhead forward if a timer paused the player.
         if (this.player() !== null && this.player().rate() === 0) {
             break;
         }
 
-        // Move playhead forward to at least make some progress.
-        this._playhead += 1;
+        // If we have no future timers before the next playhead then exit.
+        nextTimerAt = this.nextTimerAt(this._playhead + 1);
+        if (nextTimerAt === null || nextTimerAt > value || nextTimerAt === Timer.MAX) {
+            break;
+        }
+        this._playhead = nextTimerAt;
+        this._executedTimers = {};
     }
 
     // Set the final value of the playhead to what was passed in if still playing.
     if (this.player() === null || this.player().rate() > 0) {
         this._playhead = value;
     }
-    this._duration = Math.max(this._duration, this._playhead);
+
+    this.removeStaleTimers();
 
     return this;
-};
-
-/**
- * Retrieves the duration of the frame. This is the maximum playhead
- * position that has been seen.
- */
-Frame.prototype.duration = function () {
-    return this._duration;
 };
 
 /**
@@ -973,29 +973,26 @@ Frame.prototype.after = function (delay, fn) {
 /**
  * Retrieves a list of active timers sorted by time until next frame.
  */
-Frame.prototype.timers = function () {
-    var i, timer, playhead = this.playhead();
+Frame.prototype.timers = function (playhead) {
+    var _playhead = (playhead !== undefined ? playhead : this.playhead());
 
-    // Stop all timers that don't have a next play time.
-    for (i = 0; i < this._timers.length; i += 1) {
-        timer = this._timers[i];
-        if (timer.until(playhead) === null) {
-            timer.stop();
-        }
-    }
-
-    // Remove all stopped timers.
-    this._timers = this._timers.filter(function (timer) {
-        return timer.running();
-    });
-
-    // Sort remaining timers by next play time.
+    // Sort timers by next play time.
     this._timers = this._timers.sort(function (a, b) {
-        var ret = a.until(playhead) - b.until(playhead);
+        var ret = a.until(_playhead) - b.until(_playhead);
         return (ret !== 0 ? ret : a.id() - b.id());
     });
 
     return this._timers;
+};
+
+/**
+ * Retrieves a list of active timers at the current playhead.
+ */
+Frame.prototype.currentTimers = function () {
+    var self = this, playhead = this.playhead();
+    return this.timers().filter(function (timer) {
+        return !self._executedTimers[timer.id()] && timer.until(playhead) === playhead;
+    });
 };
 
 /**
@@ -1009,6 +1006,38 @@ Frame.prototype.clearTimer = function (value) {
             this._timers[i].stop();
         }
     }
+};
+
+/**
+ * Removes timers that are stopped or don't have a next execution time.
+ */
+Frame.prototype.removeStaleTimers = function () {
+    var i, timer, nextTime, playhead = this.playhead();
+
+    // Stop all timers that don't have a next play time.
+    for (i = 0; i < this._timers.length; i += 1) {
+        timer = this._timers[i];
+        nextTime = timer.until(playhead + (this._executedTimers[timer.id()] ? 1 : 0));
+        if (nextTime === null) {
+            timer.stop();
+        }
+    }
+
+    // Remove all stopped timers.
+    this._timers = this._timers.filter(function (timer) {
+        return timer.running();
+    });
+};
+
+/**
+ * Retrieves the playhead position of the next timer from a given start time.
+ */
+Frame.prototype.nextTimerAt = function (playhead) {
+    var timers = this.timers(playhead);
+    if (timers.length === 0) {
+        return null;
+    }
+    return timers[0].until(playhead);
 };
 
 /**
@@ -1081,7 +1110,6 @@ Frame.prototype.rollbackable = function (offset) {
 Frame.prototype.reset = function () {
     var i;
     this._playhead = 0;
-    this._duration = 0;
     for (i = 0; i < this._timers.length; i += 1) {
         this._timers[0].stop();
     }
@@ -2004,7 +2032,7 @@ Timer.prototype.startTime = function (value) {
     if (arguments.length === 0) {
         return this._startTime;
     }
-    this._startTime = value;
+    this._startTime = Math.round(value);
     return this;
 };
 
@@ -2020,7 +2048,7 @@ Timer.prototype.interval = function (value) {
     if (value <= 0) {
         this._interval = undefined;
     } else {
-        this._interval = value;
+        this._interval = Math.round(value);
     }
     return this;
 };
@@ -2032,7 +2060,7 @@ Timer.prototype.interval = function (value) {
  */
 Timer.prototype.delay = function (value) {
     if (value > 0) {
-        this._startTime += value;
+        this._startTime += Math.round(value);
     }
     return this;
 };
@@ -2044,7 +2072,7 @@ Timer.prototype.delay = function (value) {
  */
 Timer.prototype.times = function (value) {
     if (value > 1) {
-        this.duration(this.interval() * (value - 1));
+        this.duration(this.interval() * (Math.round(value) - 1));
     } else {
         this.interval(undefined);
         this.duration(undefined);
@@ -2062,7 +2090,7 @@ Timer.prototype.duration = function (value) {
         return this._duration;
     }
     if (value >= 0) {
-        this._duration = value;
+        this._duration = Math.round(value);
     } else {
         this._duration = undefined;
     }

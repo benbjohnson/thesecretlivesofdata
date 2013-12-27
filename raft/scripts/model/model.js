@@ -202,6 +202,44 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
     };
 
     /**
+     * Updates the election timers to ensure that two nodes will become candidates at the same time.
+     */
+    Model.prototype.ensureSplitVote = function () {
+        var electionTime, nodes = this.nodes.toArray();
+        nodes = nodes.filter(function (node) { return node.electionTimer() !== null; });
+        nodes = nodes.sort(function (a, b) { return a.electionTimer().startTime() - b.electionTimer().startTime(); })
+
+        // Set two nodes to become candidates at the same time.
+        electionTime = nodes[0].electionTimer().startTime();
+        nodes[1].electionTimer().startTime(electionTime);
+
+        // Reset the rest to elect after at least the default network latency.
+        nodes.slice(2).forEach(function (node) {
+            if (node.electionTimer().startTime() < electionTime + self.defaultNetworkLatency) {
+                node.electionTimer().delay(self.defaultNetworkLatency);
+            }
+        });
+
+        return nodes;
+    };
+
+    /**
+     * Move all nodes to the next term so they all reset to followers.
+     */
+    Model.prototype.resetToNextTerm = function () {
+        var maxTerm = 0;
+        this.nodes.toArray().forEach(function (node) { maxTerm = Math.max(maxTerm, node.currentTerm()); });
+        this.nodes.toArray().forEach(function (node) { node.currentTerm(maxTerm + 1); });
+    };
+
+    /**
+     * Resets all latencies to the default.
+     */
+    Model.prototype.resetLatencies = function () {
+        this.latencies = {};
+    };
+
+    /**
      * Clones the model.
      */
     Model.prototype.clone = function () {

@@ -4,7 +4,7 @@
 /*global $, define, d3, playback*/
 
 define([], function () {
-    var ANGLE = {2: 90, 3: 150, 5: 50},
+    var ANGLE = {2: 90, 3: 150, 4: 225, 5: 50},
         ENTRY = {x: 5, y: 5, w:15, h:4},
         RADIUS = 5;
 
@@ -100,15 +100,15 @@ define([], function () {
                 g.each(function(node) {
                     // Description.
                     var desc = [];
-                    desc.push("Node \"" + node.id + "\"");
+                    desc.push("Node " + node.id);
                     desc.push("Term: " + node.currentTerm());
                     desc.push();
                     if (node.state() === "candidate") {
                         desc.push("Vote Count: " + node.voteCount());
                     } else if (node.leaderId() !== null) {
-                        desc.push("Leader: \"" + node.leaderId() + "\"");
+                        desc.push("Leader: " + node.leaderId());
                     } else if (node.state() === "follower" && node.votedFor() !== null) {
-                        desc.push("Voted For: \"" + node.votedFor() + "\"");
+                        desc.push("Voted For: " + node.votedFor());
                     }
                     d3.select(this).select("text.node-description")
                         .attr("y", function (d) {

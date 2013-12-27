@@ -173,7 +173,7 @@ define(["./log_entry"], function (LogEntry) {
     Node.prototype.matchIndex = function (id, value) {
         var i, key, newCommitIndex,
             indices = {},
-            quorumSize = Math.ceil(this._cluster.length / 2);
+            quorumSize = Math.ceil((this._cluster.length + 1) / 2);
 
         if (arguments.length === 0) {
             throw new Error("At least 1 argument required");
@@ -235,6 +235,7 @@ define(["./log_entry"], function (LogEntry) {
         if (changed) {
             this._currentTerm = value;
             this._votedFor = null;
+            this._leaderId = null;
             this._voteCount = 0;
             this.state("follower");
             this.dispatchChangeEvent("votedForChange");
@@ -400,7 +401,7 @@ define(["./log_entry"], function (LogEntry) {
             this.clearHeartbeatTimer();
             this._heartbeatTimer = this.frame().timer(function() {
                 self.sendAppendEntriesRequests();
-            }).interval(timeout).delay(1);
+            }).interval(timeout);
         }
     };
 
@@ -437,7 +438,7 @@ define(["./log_entry"], function (LogEntry) {
     Node.prototype.resetElectionTimer = function () {
         var self = this,
             electionTimeout = this.model().electionTimeout,
-            timeout = electionTimeout * (1 + Math.random());
+            timeout = Math.round(electionTimeout * (1 + Math.random()));
 
         this.clearElectionTimer();
         this._electionTimeout = timeout;
@@ -550,9 +551,9 @@ define(["./log_entry"], function (LogEntry) {
     };
 
     Node.prototype.recvRequestVoteResponse = function (source, req, resp) {
-        var quorumSize = Math.ceil(this._cluster.length / 2);
+        var quorumSize = Math.ceil((this._cluster.length + 1) / 2);
 
-        if (this.state() === "stopped") {
+        if (this.state() !== "candidate") {
             return;
         }
 
@@ -636,6 +637,11 @@ define(["./log_entry"], function (LogEntry) {
             this._leaderId = req.leaderId;
             this.dispatchChangeEvent("leaderIdChange");
 
+            // Step down if candidate.
+            if (this.state() === "candidate") {
+                this.state("follower");
+            }
+
             // If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it (§5.3).
             // Append any new entries not already in the log.
             if (req.log.length > 0) {
@@ -669,7 +675,7 @@ define(["./log_entry"], function (LogEntry) {
     };
 
     Node.prototype.recvAppendEntriesResponse = function (source, req, resp) {
-        if (this.state() === "stopped") {
+        if (this.state() !== "leader") {
             return;
         }
 
