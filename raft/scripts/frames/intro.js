@@ -100,7 +100,7 @@ define([], function () {
         })
         .after(100, wait).indefinite()
         .after(100, function () {
-            frame.model().subtitle = '<h3>Coming to agreement on that value, or <em>consensus</em>, is easy with one node.</h3>'
+            frame.model().subtitle = '<h3>Coming to agreement, or <em>consensus</em>, on that value is easy with one node.</h3>'
                            + frame.model().controls.html();
             layout.invalidate();
         })

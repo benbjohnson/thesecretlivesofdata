@@ -72,7 +72,7 @@ define([], function () {
             return (event.target.state() === "candidate");
         })
         .after(1, function () {
-            subtitle('<h2>Once a follower becomes a candidate it starts a new <em>election term</em>...</h2>');
+            subtitle('<h2>After the election timeout the follower becomes a candidate and starts a new <em>election term</em>...</h2>');
         })
         .after(1, function () {
             subtitle('<h2>...votes for itself...</h2>');
