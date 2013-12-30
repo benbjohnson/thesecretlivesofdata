@@ -29,6 +29,8 @@ define(["./log_entry"], function (LogEntry) {
         this.addEventListener("votedForChange", this.onVotedForChange);
         this.addEventListener("voteCountChange", this.onVoteCountChange);
         this.addEventListener("currentTermChange", this.onCurrentTermChange);
+        this.addEventListener("commitIndexChange", this.onCommitIndexChange);
+        this.addEventListener("logChange", this.onLogChange);
     }
 
     Node.prototype = new playback.DataObject();
@@ -145,6 +147,7 @@ define(["./log_entry"], function (LogEntry) {
             }
             this._commitIndex = value;
             this.dispatchChangeEvent("commitIndexChange", value, prevValue);
+            this.dispatchChangeEvent("logChange");
         }
 
         return this;
@@ -282,7 +285,7 @@ define(["./log_entry"], function (LogEntry) {
     /**
      * Executes a given command.
      */
-    Node.prototype.execute = function (command) {
+    Node.prototype.execute = function (command, callback) {
         var entry,
             prevIndex = (this._log.length > 0 ? this._log[this._log.length-1].index : 0);
         if (this.state() !== "leader") {
@@ -290,7 +293,8 @@ define(["./log_entry"], function (LogEntry) {
         }
 
         // Append to log.
-        this._log.push(new LogEntry(prevIndex + 1, this.currentTerm(), command));
+        this._log.push(new LogEntry(this.model(), prevIndex + 1, this.currentTerm(), command, callback));
+        this.dispatchChangeEvent("logChange");
     };
 
 
@@ -599,7 +603,7 @@ define(["./log_entry"], function (LogEntry) {
                 leaderId: this.id,
                 prevLogIndex: (prevEntry !== undefined ? prevEntry.index : 0),
                 prevLogTerm: (prevEntry !== undefined ? prevEntry.term : 0),
-                log: this._log.slice(nextIndex),
+                log: this._log.slice(nextIndex).map(function (entry) { var clone = entry.clone(); clone.callback = null; return clone; }),
                 leaderCommit: this.commitIndex(),
             };
 
@@ -711,6 +715,14 @@ define(["./log_entry"], function (LogEntry) {
     };
 
     Node.prototype.onCurrentTermChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onCommitIndexChange = function (event) {
+        event.target.layout().invalidate();
+    };
+
+    Node.prototype.onLogChange = function (event) {
         event.target.layout().invalidate();
     };
 

@@ -16,6 +16,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.nodes = new playback.Set(this, Node);
         this.clients = new playback.Set(this, Client);
         this.messages = new playback.Set(this, Message);
+        this.nodeLabelVisible = true;
         this.latencies = {};
         this.bbox = tsld.bbox(0, 100, 100, 0);
         this.domains = {
@@ -221,6 +222,21 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         });
 
         return nodes;
+    };
+
+    /**
+     * Forces a leader to be elected immediately.
+     */
+    Model.prototype.forceImmediateLeader = function () {
+        var nodes  = this.nodes.toArray(),
+            leader = nodes[Math.floor(Math.random()*nodes.length)],
+            followers = nodes.filter(function (node) { return node !== leader; });
+        this.resetToNextTerm();
+        followers.forEach(function (node) {
+            node._leaderId = leader.id;
+            node.state("follower");
+        })
+        leader.state("leader");
     };
 
     /**

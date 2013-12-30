@@ -4,11 +4,12 @@
 /*global define, d3, tsld*/
 
 define([], function () {
-    function LogEntry(model, index, term, command) {
+    function LogEntry(model, index, term, command, callback) {
         playback.DataObject.call(this, model);
         this.index = index;
         this.term = term;
         this.command = command;
+        this.callback = (callback !== undefined ? callback : null);
     }
 
     LogEntry.prototype = new playback.DataObject();
@@ -32,15 +33,20 @@ define([], function () {
      * Applies the log to a node.
      */
     LogEntry.prototype.applyTo = function (node) {
-        var m = this.command.match(/^SET (\d+)$/);
-        if (m !== null) {
-            node._value = parseInt(m[1], 10);
-            return;
+        var m = this.command.match(/^(\w+) (\d+)$/);
+        switch (m[1]) {
+        case "SET":
+            node._value = parseInt(m[2], 10);
+            break;
+        }
+        
+        if (this.callback !== null) {
+            this.callback();
         }
     };
 
     LogEntry.prototype.clone = function (model) {
-        var clone = new LogEntry(model);
+        var clone = new LogEntry(model, this.index, this.term, this.command);
         clone.index = this.index;
         clone.term = this.term;
         clone.command = this.command;

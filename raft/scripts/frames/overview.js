@@ -13,6 +13,7 @@ define(["../model/log_entry"], function (LogEntry) {
             wait = function() { var self = this; model().controls.show(function() { player.play(); self.stop(); }); };
 
         frame.after(1, function() {
+            model().nodeLabelVisible = false;
             model().clear();
             model().nodes.create("a");
             model().nodes.create("b");
@@ -45,7 +46,7 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            node("b").state("follower");
+            node("b")._state = "follower";
             model().subtitle = '<h2>The <em>Follower</em> state,</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -53,7 +54,7 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            node("b").state("candidate");
+            node("b")._state = "candidate";
             model().subtitle = '<h2>the <em>Candidate</em> state,</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -61,7 +62,7 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            node("b").state("leader");
+            node("b")._state = "leader";
             model().subtitle = '<h2>or the <em>Leader</em> state.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -71,7 +72,7 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(300, function () {
             frame.snapshot();
             model().zoom(null);
-            node("b").state("follower");
+            node("b")._state = "follower";
             model().subtitle = '<h2>All our nodes start in the follower state.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -84,7 +85,7 @@ define(["../model/log_entry"], function (LogEntry) {
             layout.invalidate();
         })
         .after(100, function () {
-            node("a").state("candidate");
+            node("a")._state = "candidate";
             layout.invalidate();
         })
         .after(100, wait).indefinite()
@@ -108,11 +109,11 @@ define(["../model/log_entry"], function (LogEntry) {
         })
         .after(300, function () {
             model().send(node("b"), node("a"), {type:"RVRSP"}, function () {
-                node("a").state("leader");
+                node("a")._state = "leader";
                 layout.invalidate();
             })
             model().send(node("c"), node("a"), {type:"RVRSP"}, function () {
-                node("a").state("leader");
+                node("a")._state = "leader";
                 layout.invalidate();
             })
             layout.invalidate();
@@ -153,7 +154,7 @@ define(["../model/log_entry"], function (LogEntry) {
         })
         .after(500, function () {
             model().send(client("x"), node("a"), null, function () {
-                node("a")._log.push(new LogEntry(1, 1, "SET 5"));
+                node("a")._log.push(new LogEntry(model(), 1, 1, "SET 5"));
                 layout.invalidate();
             });
             layout.invalidate();
@@ -176,11 +177,11 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(300, function () {
             frame.snapshot();
             model().send(node("a"), node("b"), {type:"AEREQ"}, function () {
-                node("b")._log.push(new LogEntry(1, 1, "SET 5"));                
+                node("b")._log.push(new LogEntry(model(), 1, 1, "SET 5"));                
                 layout.invalidate();
             });
             model().send(node("a"), node("c"), {type:"AEREQ"}, function () {
-                node("c")._log.push(new LogEntry(1, 1, "SET 5"));
+                node("c")._log.push(new LogEntry(model(), 1, 1, "SET 5"));
                 layout.invalidate();
             });
             model().subtitle = '<h2>To commit the entry the node first replicates it to the follower nodes...</h2>'

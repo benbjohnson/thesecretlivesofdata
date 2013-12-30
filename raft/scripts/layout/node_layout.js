@@ -5,7 +5,7 @@
 
 define([], function () {
     var ANGLE = {2: 90, 3: 150, 4: 225, 5: 50},
-        ENTRY = {x: 5, y: 5, w:15, h:4},
+        ENTRY = {x: 7, y: 5, w:15, h:4},
         RADIUS = 5;
 
     function NodeLayout(parent) {
@@ -125,6 +125,7 @@ define([], function () {
                                 .text(function (d) { return d; });
                             this.exit().remove();
                         })
+                        .attr("fill-opacity", self.parent().model().nodeLabelVisible ? 1 : 0)
 
                     // Log
                     d3.select(this).select("g.log").selectAll("g.log-entry").data(node.log())

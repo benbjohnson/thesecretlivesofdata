@@ -31,6 +31,18 @@ define([], function () {
         return this;
     };
 
+    /**
+     * Sends a command to a node.
+     */
+    Client.prototype.send = function (target, command) {
+        var self = this;
+        return this.model().send(this, target, command, function () {
+            self.model().find(target.id).execute(command, function() {
+                self.model().send(target, self);
+            });
+        });
+    };
+
     Client.prototype.clone = function (model) {
         var clone = new Client(model, this.id);
         clone._value = this._value;

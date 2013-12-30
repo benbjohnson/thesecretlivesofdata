@@ -13,6 +13,7 @@ define([], function () {
             wait = function() { var self = this; model().controls.show(function() { self.stop(); }); };
 
         frame.after(1, function() {
+            model().nodeLabelVisible = false;
             frame.snapshot();
             frame.model().clear();
             layout.invalidate();
