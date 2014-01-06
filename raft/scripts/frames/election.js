@@ -191,6 +191,10 @@ define([], function () {
         })
         .after(1, wait).indefinite()
 
+        .then(function() {
+            player.next();
+        })
+
 
         player.play();
     };

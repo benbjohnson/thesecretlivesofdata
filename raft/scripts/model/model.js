@@ -145,7 +145,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         var ret,
             x = (a < b ? a : b),
             y = (a < b ? b : a),
-            key = [a, b].join("|");
+            key = [x, y].join("|");
         if (arguments.length === 2) {
             ret = this.latencies[key];
             return (ret !== undefined ? ret : this.defaultNetworkLatency);
@@ -200,6 +200,21 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         });        
 
         return candidateId;
+    };
+
+    /**
+     * Updates the election timers to ensure that a specific node will become candidate.
+     */
+    Model.prototype.ensureExactCandidate = function (candidateId) {
+        var self = this,
+            nodes = this.nodes.toArray().filter(function (node) { return node.id != candidateId && node.electionTimer() !== null; }),
+            minTime = this.nodes.find(candidateId).electionTimer().startTime();
+
+        // Extend other candidate timers.
+        nodes.forEach(function (node) {
+            var minStartTime = minTime + (self.defaultNetworkLatency * 1.25);
+            node.electionTimer().startTime(minStartTime);
+        });        
     };
 
     /**

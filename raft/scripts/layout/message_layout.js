@@ -104,13 +104,17 @@ define([], function () {
 
         for (i = 0; i < messages.length; i += 1) {
             message = messages[i];
-            source = model.find(message.source).g.transform.baseVal.getItem(0).matrix;
-            target = model.find(message.target).g.transform.baseVal.getItem(0).matrix;
-            pct = (this.parent().current().playhead() - message.sendTime) / (message.recvTime - message.sendTime);
+            try {
+                source = model.find(message.source).g.transform.baseVal.getItem(0).matrix;
+                target = model.find(message.target).g.transform.baseVal.getItem(0).matrix;
+                pct = (this.parent().current().playhead() - message.sendTime) / (message.recvTime - message.sendTime);
 
-            message.x_px = source.e + ((target.e - source.e) * pct);
-            message.y_px = source.f + ((target.f - source.f) * pct);
-            message.r = (TYPE[message.type()] ? TYPE[message.type()].size : 2);
+                message.x_px = source.e + ((target.e - source.e) * pct);
+                message.y_px = source.f + ((target.f - source.f) * pct);
+                message.r = (TYPE[message.type()] ? TYPE[message.type()].size : 2);
+            } catch(e) {
+                // console.log("message layout error: ", e);
+            }
         }
     };
 

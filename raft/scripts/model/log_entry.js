@@ -35,8 +35,14 @@ define([], function () {
     LogEntry.prototype.applyTo = function (node) {
         var m = this.command.match(/^(\w+) (\d+)$/);
         switch (m[1]) {
+        case "ADD":
+            node._value += parseInt(m[2], 10);
+            break;
         case "SET":
             node._value = parseInt(m[2], 10);
+            break;
+        case "SUB":
+            node._value -= parseInt(m[2], 10);
             break;
         }
         

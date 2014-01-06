@@ -35,12 +35,24 @@ define([], function () {
      * Sends a command to a node.
      */
     Client.prototype.send = function (target, command) {
-        var self = this;
-        return this.model().send(this, target, command, function () {
+        var message, self = this;
+        message = this.model().send(this, target, command, function () {
             self.model().find(target.id).execute(command, function() {
-                self.model().send(target, self);
+                self.model().send(target, self, null, function() {
+                    self.dispatchChangeEvent("recv");
+                });
             });
         });
+        self.dispatchChangeEvent("send");
+        return message;
+    };
+
+    /**
+     * Dispatches the event from the client and from the model.
+     */
+    Client.prototype.dispatchEvent = function (event) {
+        playback.DataObject.prototype.dispatchEvent.call(this, event);
+        this.model().dispatchEvent(event);
     };
 
     Client.prototype.clone = function (model) {

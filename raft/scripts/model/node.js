@@ -595,18 +595,17 @@ define(["./log_entry"], function (LogEntry) {
     Node.prototype.sendAppendEntriesRequest = function (target) {
         var self  = this,
             frame = this.frame(),
-            nextIndex = (this._nextIndex[target.id] !== undefined ? this._nextIndex[target.id] : 0),
-            prevEntry = this._log[nextIndex-1],
+            nextIndex = (this._nextIndex[target.id] !== undefined ? this._nextIndex[target.id] : 1),
+            prevEntry = this._log[nextIndex-2],
             req   = {
                 type: "AEREQ",
                 term: this.currentTerm(),
                 leaderId: this.id,
                 prevLogIndex: (prevEntry !== undefined ? prevEntry.index : 0),
                 prevLogTerm: (prevEntry !== undefined ? prevEntry.term : 0),
-                log: this._log.slice(nextIndex).map(function (entry) { var clone = entry.clone(); clone.callback = null; return clone; }),
+                log: this._log.slice(nextIndex - 1).map(function (entry) { var clone = entry.clone(); clone.callback = null; return clone; }),
                 leaderCommit: this.commitIndex(),
             };
-
         this.dispatchChangeEvent("appendEntriesRequestSent", req);
 
         return this.model().send(this, target, req, function() {
@@ -660,6 +659,8 @@ define(["./log_entry"], function (LogEntry) {
 
             // Reset election timeout.
             this.resetElectionTimer();
+
+            this.dispatchChangeEvent("logChange");
         }
 
         // Send response.

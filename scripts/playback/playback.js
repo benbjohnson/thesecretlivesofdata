@@ -752,7 +752,7 @@ EventDispatcher.prototype.removeEventListener = function (type, listener) {
     if (this._eventListeners[type] !== undefined) {
         index = this._eventListeners[type].indexOf(listener);
         if (index !== -1) {
-            this._eventListeners[type].splice(index, 0);
+            this._eventListeners[type].splice(index, 1);
         }
     }
     return this;
@@ -2142,14 +2142,15 @@ Timer.prototype.after = function (delay, fn) {
  */
 Timer.prototype.at = function (target, eventType, fn) {
     return this.then(function () {
-        var timer = this;
-        target.addEventListener(eventType, function (event) {
+        var listener, timer = this;
+        listener = function (event) {
             var ret = fn(event);
             if (ret !== false) {
-                target.removeEventListener(eventType, fn);
+                target.removeEventListener(eventType, listener);
                 timer.stop();
             }
-        });
+        };
+        target.addEventListener(eventType, listener);
     }).indefinite();
 };
 
