@@ -196,6 +196,14 @@ define([], function () {
             subtitle('<h2>Both nodes A & B will roll back their uncommitted entries and match the new leader\'s log.</h2>');
         })
         .after(1, wait).indefinite()
+        .after(1, function () {
+            subtitle('<h2>Our log is now consistent across our cluster.</h2>', false);
+        })
+        .after(1, wait).indefinite()
+
+        .then(function() {
+            player.next();
+        })
 
         player.play();
     };
