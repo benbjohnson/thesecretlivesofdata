@@ -183,8 +183,11 @@ define([], function () {
         })
         .after(1, wait).indefinite()
         .after(1, function () {
-            model().resetLatencies();
             model().partitions.removeAll();
+            layout.invalidate();
+        })
+        .after(200, function () {
+            model().resetLatencies();
         })
         .at(model(), "stateChange", function(event) {
             return (event.target.id === "B" && event.target.state() === "follower");
