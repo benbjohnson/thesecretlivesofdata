@@ -143,7 +143,7 @@ define([], function () {
         // Split Vote
         //------------------------------
         .after(1, function () {
-            subtitle('<h2>Requiring a marjority of votes guarantees that only one leader can be elected per term.</h2>', false);
+            subtitle('<h2>Requiring a majority of votes guarantees that only one leader can be elected per term.</h2>', false);
         })
         .after(1, wait).indefinite()
         .after(1, function () {
