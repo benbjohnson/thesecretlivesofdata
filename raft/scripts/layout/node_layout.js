@@ -158,7 +158,7 @@ define([], function () {
                                 .attr("x", text.x)
                                 .attr("y", text.y)
                                 .attr("fill", text.fill)
-                                .attr("font-size", function(d) { return self.parent().scales.font(10) + "px"})
+                                .attr("font-size", function(d) { return self.parent().scales.font(8) + "px"})
                                 .text(function (d) { return d.command; })
                                 ;
 

@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback, tsld*/
 
-define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
+define(["./controls", "./client", "./message", "./node", "./partition"], function (Controls, Client, Message, Node, Partition) {
     function Model() {
         playback.Model.call(this);
 
@@ -16,6 +16,7 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.nodes = new playback.Set(this, Node);
         this.clients = new playback.Set(this, Client);
         this.messages = new playback.Set(this, Message);
+        this.partitions = new playback.Set(this, Partition);
         this.nodeLabelVisible = true;
         this.latencies = {};
         this.bbox = tsld.bbox(0, 100, 100, 0);
@@ -157,9 +158,11 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
     /**
      * Returns the current leader.
      */
-    Model.prototype.leader = function () {
+    Model.prototype.leader = function (within) {
         return this.nodes.toArray().filter(function (node) {
-            return node.state() === "leader";
+            if (within === undefined || within === null || within.indexOf(node.id) !== -1) {
+                return node.state() === "leader";
+            }
         }).shift();
     };
 

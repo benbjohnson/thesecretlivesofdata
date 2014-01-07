@@ -42,6 +42,7 @@ define([], function () {
             model().nodes.create("B");
             model().nodes.create("C");
             cluster(["A", "B", "C"]);
+            layout.invalidate();
         })
         .after(500, function () {
             model().forceImmediateLeader();
@@ -131,10 +132,20 @@ define([], function () {
         })
         .after(1, wait).indefinite()
         .after(1, function () {
+            subtitle('<h2>Let\'s add a partition to separate A & B from C, D & E.</h2>', false);
+        })
+        .after(1, wait).indefinite()
+        .after(1, function () {
             model().latency("A", "C", 0).latency("A", "D", 0).latency("A", "E", 0);
             model().latency("B", "C", 0).latency("B", "D", 0).latency("B", "E", 0);
             model().ensureExactCandidate("C");
-            subtitle('<h2>Let\'s separate A & B from C, D & E.</h2>', false);
+        })
+        .after(model().defaultNetworkLatency * 0.5, function () {
+            var p = model().partitions.create("-");
+            p.x1 = Math.min.apply(null, model().nodes.toArray().map(function(node) { return node.x;}));
+            p.x2 = Math.max.apply(null, model().nodes.toArray().map(function(node) { return node.x;}));
+            p.y1 = p.y2 = Math.round(node("B").y + node("C").y) / 2;
+            layout.invalidate();
         })
         .at(model(), "stateChange", function(event) {
             return (event.target.state() === "leader");
@@ -145,7 +156,7 @@ define([], function () {
         .after(1, wait).indefinite()
         .after(1, function () {
             model().clients.create("Y");
-            subtitle('<h2>Let\s add another client and try to update both leaders.</h2>', false);
+            subtitle('<h2>Let\'s add another client and try to update both leaders.</h2>', false);
         })
         .after(1, wait).indefinite()
         .after(1, function () {
@@ -158,16 +169,22 @@ define([], function () {
         })
         .after(1, wait).indefinite()
         .after(1, function () {
-            client("X").send(node("C"), "SET 8");
-            subtitle('<h2>The other client will try to set the value of node C to "8".</h2>', false);
+            var leader = model().leader(["C", "D", "E"]);
+            client("X").send(leader, "SET 8");
+            subtitle('<h2>The other client will try to set the value of node ' + leader.id + ' to "8".</h2>', false);
         })
         .after(1, wait).indefinite()
         .after(1, function () {
-            subtitle('<h2>This will succeed because it can replicate to a majority.</h2>');
+            subtitle('<h2>This will succeed because it can replicate to a majority.</h2>', false);
         })
+        .after(1, wait).indefinite()
+        .after(1, function () {
+            subtitle('<h2>Now let\'s heal the network partition.</h2>', false);
+        })
+        .after(1, wait).indefinite()
         .after(1, function () {
             model().resetLatencies();
-            subtitle('<h2>Now let\'s heal the network partition.</h2>');
+            model().partitions.removeAll();
         })
         .at(model(), "stateChange", function(event) {
             return (event.target.id === "B" && event.target.state() === "follower");
@@ -176,7 +193,7 @@ define([], function () {
             subtitle('<h2>Node B will see the higher election term and step down.</h2>');
         })
         .after(1, function () {
-            subtitle('<h2>Both nodes A & B will roll back their uncommitted entries and match the new leader\s log.</h2>');
+            subtitle('<h2>Both nodes A & B will roll back their uncommitted entries and match the new leader\'s log.</h2>');
         })
         .after(1, wait).indefinite()
 
