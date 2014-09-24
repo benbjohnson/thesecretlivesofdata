@@ -1,0 +1,79 @@
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Georgia,Cambria,"Times New Roman",Times,serif;
+  letter-spacing: 0.01rem;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.5;
+  color: rgba(0,0,0,0.8);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 700;
+  font-style: normal;
+  font-size: 36px;
+  margin-left: -1.8px;
+  line-height: 1.2;
+  margin-top: 40px;
+  margin-bottom: 4px;
+}
+
+h2 {
+  font-weight: 700;
+  font-style: normal;
+  font-size: 30px;
+  margin-left: -1.5px;
+  line-height: 1.2;
+  margin-top: 40px;
+  margin-bottom: 2px;
+}
+
+article {
+  width: 700px;
+  position: relative;
+  right: 0%;
+  margin: 0 auto;
+  word-wrap: break-word;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 800px) {
+  article {
+    width: 640px;
+  }
+}
+
+@media (max-width: 680px) {
+  article {
+    width: auto;
+    margin-left: 20px;
+    margin-right: 25px;
+  }
+}
+
+/* SVG styles for responsive resizing. */
+div.svg {
+    position: relative;
+    height:0;
+    /* padding-top: ???; */
+}
+
+svg {
+    position: absolute;
+    display:block;
+    width: 100%;
+    height: 100%;
+    top:0;
+    left:0;
+    background-color: cyan;
+}
