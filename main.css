@@ -84,6 +84,12 @@ header, article {
   }
 }
 
+hr {
+  border: 0;
+  background: #666;
+  height: 1px;
+}
+
 /* SVG styles for responsive resizing. */
 div.svg {
     position: relative;
