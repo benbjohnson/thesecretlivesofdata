@@ -18,7 +18,16 @@ h1, h2, h3, h4, h5 {
   letter-spacing: -0.02em;
 }
 
-h1 {
+header h1 {
+  font-weight: 400;
+  font-style: normal;
+  font-size: 28px;
+  margin-left: -1.8px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+article h1 {
   font-weight: 700;
   font-style: normal;
   font-size: 36px;
@@ -38,7 +47,21 @@ h2 {
   margin-bottom: 2px;
 }
 
-article {
+h3 {
+  margin-bottom: 10px;
+}
+
+a {
+  color: rgba(70,130,180,1);
+  text-decoration: none;
+}
+
+header h1 a {
+  color: rgba(0,0,0,0.8);
+  text-decoration: none;
+}
+
+header, article {
   width: 700px;
   position: relative;
   right: 0%;
@@ -48,13 +71,13 @@ article {
 }
 
 @media (max-width: 800px) {
-  article {
+  header, article {
     width: 640px;
   }
 }
 
 @media (max-width: 680px) {
-  article {
+  header, article {
     width: auto;
     margin-left: 20px;
     margin-right: 25px;
@@ -75,5 +98,5 @@ svg {
     height: 100%;
     top:0;
     left:0;
-    background-color: cyan;
+    /* background-color: cyan; */
 }
