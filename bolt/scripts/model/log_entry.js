@@ -4,10 +4,10 @@
 /*global define, d3, tsld*/
 
 define([], function () {
-    function LogEntry(model, index, term, command, callback) {
+    function LogEntry(model, index, color, command, callback) {
         playback.DataObject.call(this, model);
         this.index = index;
-        this.term = term;
+        this.color = color;
         this.command = command;
         this.callback = (callback !== undefined ? callback : null);
     }
@@ -22,12 +22,6 @@ define([], function () {
         return tsld.bbox(this.y, this.x + this.w, this.y + this.h, this.x);
     };
 
-    /**
-     * Determines the bounding box of the log entry.
-     */
-    LogEntry.prototype.bbox = function () {
-        return tsld.bbox(this.y, this.x + this.w, this.y + this.h, this.x);
-    };
 
     /**
      * Applies the log to a node.
@@ -52,9 +46,9 @@ define([], function () {
     };
 
     LogEntry.prototype.clone = function (model) {
-        var clone = new LogEntry(model, this.index, this.term, this.command);
+        var clone = new LogEntry(model, this.index, this.color, this.command);
         clone.index = this.index;
-        clone.term = this.term;
+        clone.color = this.color;
         clone.command = this.command;
         return clone;
     };

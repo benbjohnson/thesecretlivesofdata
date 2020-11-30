@@ -38,7 +38,6 @@ define(["./model/model", "./layout/layout", "./frames/init", "../../scripts/domR
     player.addEventListener("tick", function () {
         player.current().model().tick(player.current().playhead());
         player.layout().messages.invalidate();
-        player.layout().nodes.invalidateElectionTimers();
     });
 
     // Left and right arrow click handlers.

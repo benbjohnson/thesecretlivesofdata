@@ -5,25 +5,30 @@
 
 define([], function () {
     var TYPE = {
-            "AEREQ": {
+            "Query": {
+                color: "indigo",
+                size: 2,
+                opacity: 1,
+            },
+            "Results": {
+                color: "cyan",
+                size: 2,
+                opacity: 1,
+            },
+            "Error": {
                 color: "red",
                 size: 2,
                 opacity: 1,
             },
-            "AERSP": {
-                color: "red",
+            "health": {
+                color: "grey",
                 size: 1,
-                opacity: 0,
+                opacity: 0.5,
             },
-            "RVREQ": {
-                color: "green",
-                size: 2,
-                opacity: 1,
-            },
-            "RVRSP": {
+            "health_ok": {
                 color: "green",
                 size: 1,
-                opacity: 0,
+                opacity: 0.5,
             }
         };
 
@@ -70,7 +75,7 @@ define([], function () {
                 stroke = {
                     color: function (d) { return TYPE[d.type()] ? TYPE[d.type()].color : "black"; }
                 };
-                this.enter().append("circle")
+                var g = this.enter().append("circle")
                     .attr("class", "message")
                     .attr("r", r)
                     .style("fill", fill.color)
@@ -78,13 +83,21 @@ define([], function () {
                     .style("stroke", stroke.color)
                     .style("stroke-width", 2)
                     .each(function(d) { this.__data__.g = this });
-
+                g.append("text")
+                    .attr("class", "node-value")
+                    .attr("y", "2")
+                    .attr("fill", "white")
+                    .attr("dominant-baseline", "middle")
+                    .attr("text-anchor", "middle");
                 this.attr("cx", function (d) { return d.x_px; })
                     .attr("cy", function (d) { return d.y_px; })
                     .style("fill", fill.color)
                     .style("fill-opacity", fill.opacity)
                     .style("stroke", stroke.color);
 
+                g.select("text.node-value")
+                    .attr("font-size", function(d) { return self.parent().scales.font(12)})
+                    .text(function (d) { return d.mode });
                 // Scale r only if the domain has changed.
                 if (rscaling) {
                     this.transition().duration(500)
@@ -112,6 +125,7 @@ define([], function () {
                 message.x_px = source.e + ((target.e - source.e) * pct);
                 message.y_px = source.f + ((target.f - source.f) * pct);
                 message.r = (TYPE[message.type()] ? TYPE[message.type()].size : 2);
+                message.mode = message.mode();
             } catch(e) {
                 // console.log("message layout error: ", e);
             }
