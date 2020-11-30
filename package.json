@@ -1,10 +1,10 @@
 {
-  "name": "tsld",
+  "name": "tsld-bolt",
   "version": "0.0.1",
-  "author": "Ben Johnson <benbjohnson@yahoo.com>",
-  "description": "The Secret Lives of Data",
+  "author": "David Pecollet <david.pecollet@neo4j.com>",
+  "description": "The Secret Lives of Data : Bolt",
   "license": "MIT",
-  "url": "https://github.com/benbjohnson/thesecretlivesofdata",
+  "url": "https://github.com/pecollet/thesecretlivesofdata",
   "repository": {
     "type": "git",
     "url": "git://github.com/benbjohnson/thesecretlivesofdata.git"
@@ -14,8 +14,5 @@
     "mocha-phantomjs": "3.1.2",
     "jslint": "0.1.9",
     "uglify-js": ">= 1.3.4"
-  },
-  "scripts": {
-    "test": "make test"
   }
 }

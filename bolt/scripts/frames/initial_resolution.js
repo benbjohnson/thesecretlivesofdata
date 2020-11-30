@@ -55,7 +55,7 @@ define(["../model/log_entry"], function (LogEntry) {
         //------------------------------
         .after(1, function () {
             frame.snapshot();
-            model().subtitle =  '<h2>We\'ve seen that the client connects to a core instance to retrieve the routing table.</h2>'
+            model().subtitle =  '<h3>We\'ve seen that the client connects to a core instance to retrieve the routing table.</h3>'
                            + '<h2>But what if that server is down?</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -104,7 +104,7 @@ define(["../model/log_entry"], function (LogEntry) {
             
             //layout.invalidate();
            //model().zoom([client("dns"), client("x")]);
-            model().subtitle =  '<h2>We create a cluster DNS name with "A records" for each core instance...</h2>'
+            model().subtitle =  '<h3>Set up a DNS name for the whole  cluster with "A records" for each core instance...</h3>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -113,7 +113,7 @@ define(["../model/log_entry"], function (LogEntry) {
             frame.snapshot();
             client("x")._url = "neo4j://cluster.domain.com:7687"; 
             //model().zoom([client("x")]);
-            model().subtitle =  '<h2>... and use that name in the client\'s connection URL</h2>'
+            model().subtitle =  '<h3>... and use that name in the client\'s connection URL</h3>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -246,7 +246,7 @@ define(["../model/log_entry"], function (LogEntry) {
             model().nodeLabelVisible = true;
             frame.snapshot();
             model().clients.create("x");
-            client("x")._url = "neo4j://<addressFromResolverFunction>:7687";
+            client("x")._url = "neo4j://<addressesFromResolverFct>:7687";
             model().nodes.create("a");
             model().nodes.create("b");
             model().nodes.create("c");
@@ -256,8 +256,8 @@ define(["../model/log_entry"], function (LogEntry) {
             node("c")._state = "follower";
             model().nodes.create("rr");
             node("rr").type("rr");
-            model().subtitle =  '<h2>The last option is to use a <em>Resolver function</em>, internally in the client code.</h2>'
-                           + '<h3>That function is responsible for returning the addresses of all the core instances.</h3>'
+            model().subtitle =  '<h2>The last option is to implement a <em>Resolver function</em>, in the client code.</h2>'
+                           + '<h5>That function is responsible for returning the addresses of the core instances. It may hardcode them or pull them from an external source.</h5>'
                            + model().controls.html();
             layout.invalidate();
         })

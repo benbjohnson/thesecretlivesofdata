@@ -7,7 +7,7 @@ The Secret Lives of Data : Bolt
 
 ## Overview
 
-Here I'm adapting similar visualizations to Neo4js Bolt protocol, and in particular to the Bolt Routing protocol, used with Neo4j Causal Clusters.
+Here I'm adapting similar visualizations for Neo4j's Bolt protocol, and in particular to the Bolt Routing protocol, used with Neo4j Causal Clusters.
 
 
 ## Visualizations
