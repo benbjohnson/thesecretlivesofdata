@@ -195,14 +195,31 @@ define(["../model/log_entry"], function (LogEntry) {
                     layout.invalidate();
                 });
             });
-            model().subtitle =  '<h2>The load balancer must be set up to target the core instances, with periodic health checks.</h2>'
-                           + model().controls.html();
+            model().subtitle =  '<h2>The load balancer must be set up to target the core instances, with periodic health checks.</h2>';
             layout.invalidate();
         })
-        .after(1, wait).indefinite()
-        .after(100, function () {
+        .after(2000, function () {
+            model().send(client("LB"), node("a"), {type:"health"});
+            model().send(client("LB"), node("b"), {type:"health"}, function () {
+                model().send(node("b"), client("LB"), {type:"health_ok"}, function () {
+                    node("b")._address = "healthy";
+                    layout.invalidate();
+                });
+            });
+            model().send(client("LB"), node("c"), {type:"health"}, function () {
+                model().send(node("c"), client("LB"), {type:"health_ok"}, function () {
+                    node("c")._address = "healthy";
+                    layout.invalidate();
+                });
+            });
+            layout.invalidate();
+        })
+       // .after(1, wait).indefinite()
+        .after(2000, function () {
             frame.snapshot();
             node("a")._address = "unhealthy";
+            model().subtitle =  '<h2>The load balancer must be set up to target the core instances, with periodic health checks.</h2>'
+                           + model().controls.html();
             layout.invalidate();
         })
         .after(1, wait).indefinite()
@@ -284,6 +301,19 @@ define(["../model/log_entry"], function (LogEntry) {
                 })
             //});
             model().subtitle =  '<h2>... to retry with the next address.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(1, wait).indefinite()
+        .after(100, function () {
+            model().nodeLabelVisible = false;
+            frame.snapshot();
+
+            model().send(client("x"), node("b"), {type:"Query"}, function () {
+                    model().send(node("b"), client("x"), {type:"Results"});
+            });
+            model().subtitle =  '<h2>Once the routing table is retrieved (in whichever way),</h2>'
+                           + '<h2>the client communicates directly with the Neo4j instances using the addresses from the table.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })

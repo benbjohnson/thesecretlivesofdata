@@ -42,8 +42,9 @@ define(["../model/log_entry"], function (LogEntry) {
             node("a")._state = "follower";
             node("c")._state = "follower";
             node("rr")._type = "rr";
-            model().subtitle = '<h2>The client\'s driver is set up with a connection URL using the <em>neo4j://</em> scheme.</h2>'
-                            +'<h3>Each Neo4j instance is configured with a <em>dbms.connector.bolt.advertised_address</em></h3>'
+            model().subtitle = '<h2>The client\'s driver is set up with a connection URL using the <em>neo4j://</em> scheme<sup>*</sup>.</h2>'
+                            + '<h3>Each Neo4j instance is configured with a <em>dbms.connector.bolt.advertised_address</em></h3>'
+                            + '<h5>* <em>neo4j://</em> is the Neo4j 4.x equivalent <em>bolt+routing://</em> in Neo4j 3.x</h5>'
                             + model().controls.html();
             layout.invalidate();
         })
@@ -73,7 +74,7 @@ define(["../model/log_entry"], function (LogEntry) {
             
             model().subtitle = '<h2>The routing table contains the advertised addresses of the cluster instances, grouped by role :</h2>'
                            + '<h2>WRITE for the leader ; READ for followers and read-replicas<sup>*</sup></h2>'
-                           + '<h5>* : default config. READ role can be turned on/off for Leader and/or Followers. Fine-grained filters can be applied with <em>server groups</em> & <em>routing policies</em>.</h5>'
+                           + '<h5>* default config. READ role can be turned on/off for Leader and/or Followers. Fine-grained filters can be applied with <em>server groups</em> & <em>routing policies</em>.</h5>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -155,7 +156,8 @@ define(["../model/log_entry"], function (LogEntry) {
             // client("x")._electionTimer = frame.after(client("x")._electionTimeout, function() {
             //     model().send(client("x"), node("a"), {type:"Query", mode:"R"});
             // });
-            model().subtitle = '<h2>The client also refreshes its routing table periodically every 5 minutes.</h2>'
+            model().subtitle = '<h2>The client also refreshes its routing table periodically every 5 minutes<sup>*</sup>.</h2>'
+                            + '<h5>* configurable with <em>dbms.routing_ttl</em></h5>'
                            + model().controls.html();
             layout.invalidate();
         })
