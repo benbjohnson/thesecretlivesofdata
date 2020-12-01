@@ -120,7 +120,7 @@ define(["../model/log_entry"], function (LogEntry) {
             //           model().send(node(item), client("x"), {type:"Results"}); 
             //     });
             // });
-            model().subtitle = '<h2>... & send reads & writes to the correct ones.</h2>' 
+            model().subtitle = '<h2>... & be able to send reads & writes to the correct ones.</h2>' 
                            + model().controls.html();
             layout.invalidate();
         })
@@ -159,8 +159,8 @@ define(["../model/log_entry"], function (LogEntry) {
             frame.snapshot();
             model().nodeLabelVisible = false;
             model().zoom([node("a"), node("b"), node("c")]);
-            model().subtitle = '<h2>And cluster instances can change role over time...</h2>'
-               + model().controls.html();
+            model().subtitle = '<h2>To make matters worse, cluster instances can also change role over time...</h2>';
+         
             layout.invalidate();
         })
         .after(1200, function () {
@@ -171,7 +171,7 @@ define(["../model/log_entry"], function (LogEntry) {
         })
         .after(1200, function () {
             node("c")._state = "stopped";
-            model().subtitle = '<h2>And cluster instances can change role over time... or stop.</h2>'
+            model().subtitle = model().subtitle+ '<h2> or stop.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })

@@ -233,7 +233,7 @@ define(["../model/log_entry"], function (LogEntry) {
                     layout.invalidate();
                 });
             });
-            model().subtitle = '<h2>And if the routing table has any unassigned role, the client immediately queries for a fresh table.</h2>'
+            model().subtitle = '<h2>If the routing table has any unassigned role, the client immediately queries for a fresh table.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
