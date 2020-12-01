@@ -56,7 +56,7 @@ define(["../model/log_entry"], function (LogEntry) {
             
             model().send(client("x"), node("a"), {type:"Query"}, function () {
                 model().send(node("a"), client("x"), {type:"Results"}, function () {
-
+                    client("x")._log=[];
                     client("x")._log.push(new LogEntry(model(), 1, "black", "READ=a.domain.com,c.domain.com,rr.domain.com"));
                     client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
                     client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
@@ -67,7 +67,7 @@ define(["../model/log_entry"], function (LogEntry) {
                 
             } );
 
-            model().subtitle = '<h2>The client sends a query to its URL address, asking for a routing table.</h2>'
+            model().subtitle = '<h2>The client starts by sending a query to its URL address, asking for a routing table.</h2>'
                             + model().controls.html();
             layout.invalidate();
         })
@@ -78,7 +78,10 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "red", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "red", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
             model().subtitle = '<h2>The routing table contains the advertised addresses of the cluster instances, grouped by role :</h2>'
                            + '<h2>WRITE for the leader ; READ for followers and read-replicas<sup>*</sup></h2>'
                            + '<h5>* default config. READ role can be turned on/off for Leader and/or Followers. Fine-grained filters can be applied with <em>server groups</em> & <em>routing policies</em>.</h5>'
@@ -88,7 +91,10 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "black", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "red", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
             model().subtitle = '<h2>The ROUTE role is assigned to all core instances.</h2>' 
                     + model().controls.html();
             layout.invalidate();
@@ -97,6 +103,10 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, function () {
             frame.snapshot();
             model().zoom(null);
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "black", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
             client("x")._value="W";
             client("x")._url="";
             model().send(client("x"), node("b"), {type:"Query", mode:"W"}, function () {
@@ -124,7 +134,13 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(400, function () {
             frame.snapshot();
             model().send(client("x"), node("a"), {type:"Query", mode:"R"}, function () {
-                model().send(node("a"), client("x"), {type:"Results"});
+                model().send(node("a"), client("x"), {type:"Results"}, function () {
+                    client("x")._log=[];
+                    client("x")._log.push(new LogEntry(model(), 1, "blue", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 2, "blue", "WRITE=b.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 3, "blue", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
+                    layout.invalidate();
+                });
             });
             model().subtitle = '<h2>The client also refreshes its routing table periodically<sup>*</sup> against one of the ROUTE instances.</h2>'
                             + '<h5>* every 5 minutes by default, configurable with <em>dbms.routing_ttl</em></h5>'
@@ -139,7 +155,10 @@ define(["../model/log_entry"], function (LogEntry) {
             node("a")._state = "stopped";
             //node("a")._value = "X";
             client("x")._url=""
-
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "black", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
             model().subtitle = '<h2>If there\'s a change in the cluster during that time, like a node stopping, or a new leader election, the client\'s routing table becomes stale.</h2>'
                            + '<h2>That may cause errors...</h2>'
                            + model().controls.html();
@@ -171,6 +190,10 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(400, function () {
             frame.snapshot();
             client("x")._value="W";
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "black", "READ=c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=b.domain.com,c.domain.com"));
             model().send(client("x"), node("b"), {type:"Query", mode:"R"}, function () {
                 model().send(node("b"), client("x"), {type:"Error"}, function () {
                     client("x")._value="Error";
