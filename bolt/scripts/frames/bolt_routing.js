@@ -82,9 +82,11 @@ define(["../model/log_entry"], function (LogEntry) {
             client("x")._log.push(new LogEntry(model(), 1, "red", "READ=a.domain.com,c.domain.com,rr.domain.com"));
             client("x")._log.push(new LogEntry(model(), 2, "red", "WRITE=b.domain.com"));
             client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
-            model().subtitle = '<h2>The routing table contains the advertised addresses of the cluster instances, grouped by role :</h2>'
+            model().subtitle = '<h3>The table contains the advertised addresses of the cluster instances, grouped by role :</h3>'
                            + '<h2>WRITE for the leader ; READ for followers and read-replicas<sup>*</sup></h2>'
-                           + '<h5>* default config. READ role can be turned on/off for Leader and/or Followers. Fine-grained filters can be applied with <em>server groups</em> & <em>routing policies</em>.</h5>'
+                           + '<h5>* default config. Use <em>causal_clustering.cluster_allow_reads_on_followers/leader</em> to tweak.</h5>'
+                           + '<h5>Fine-grained filters can also be applied with <em>server groups</em> & <em>routing policies</em>.</h5>'
+
                            + model().controls.html();
             layout.invalidate();
         })
@@ -182,7 +184,7 @@ define(["../model/log_entry"], function (LogEntry) {
             client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
             client("x")._log.push(new LogEntry(model(), 3, "blue", "ROUTE=b.domain.com,c.domain.com"));
 
-            model().subtitle = '<h2>In such case, the client will remove the unreachable instance from its curent routing table.</h2>'
+            model().subtitle = '<h2>In such case, the client will remove the unreachable instance from its current routing table.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -208,6 +210,20 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(400, function () {
             frame.snapshot();
             client("x")._value="";
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "black", "READ=b.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "blue", "WRITE="));
+            client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=b.domain.com,c.domain.com"));
+
+            model().subtitle = '<h2>In that case, the client will remove the instance from the WRITER list.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(100, wait).indefinite()
+        .after(400, function () {
+            frame.snapshot();
+            client("x")._value="";
+
             model().send(client("x"), node("b"), {type:"Query", mode:"R"}, function () {
                 model().send(node("b"), client("x"), {type:"Results"}, function () {
                     client("x")._log=[];
@@ -217,12 +233,11 @@ define(["../model/log_entry"], function (LogEntry) {
                     layout.invalidate();
                 });
             });
-            model().subtitle = '<h2>In that case, the client will immediately refresh its routing table.</h2>'
+            model().subtitle = '<h2>And if the routing table has any unassigned role, the client immediately queries for a fresh table.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
         .after(100, wait).indefinite()
-
 
         .after(1, function () {
             player.next();
