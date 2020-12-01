@@ -57,8 +57,11 @@ define(["../model/log_entry"], function (LogEntry) {
             model().send(client("x"), node("a"), {type:"Query"}, function () {
                 model().send(node("a"), client("x"), {type:"Results"}, function () {
 
-                    client("x")._log.push(new LogEntry(model(), 1, 1, "READ=a.domain.com,c.domain.com,rr.domain.com"));
-                    client("x")._log.push(new LogEntry(model(), 2, 1, "WRITE=b.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 1, "black", "READ=a.domain.com,c.domain.com,rr.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=a.domain.com,b.domain.com,c.domain.com"));
+
+                    client("x").dispatchChangeEvent("logChange");
                     layout.invalidate();
                 });
                 
@@ -68,6 +71,10 @@ define(["../model/log_entry"], function (LogEntry) {
                             + model().controls.html();
             layout.invalidate();
         })
+        // .at(model(), "logChange", function () {
+        //     model().subtitle = model().subtitle + model().controls.html();
+        //     layout.invalidate();
+        // })
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
@@ -81,6 +88,14 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
+            
+            model().subtitle = '<h2>The ROUTE role is assigned to all core instances.</h2>' 
+                    + model().controls.html();
+            layout.invalidate();
+        })
+        .after(100, wait).indefinite()
+        .after(100, function () {
+            frame.snapshot();
             model().zoom(null);
             client("x")._value="W";
             client("x")._url="";
@@ -88,7 +103,7 @@ define(["../model/log_entry"], function (LogEntry) {
                 model().send(node("b"), client("x"), {type:"Results"});
             });
             model().subtitle = '<h2>Depending on the <em>Access Mode</em> (Write or Read) selected in the driver session,</h2>'
-                           +'<h2>queries are sent to a WRITE node...</h2>'
+                           +'<h2>queries are sent to a WRITE instance...</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -100,25 +115,59 @@ define(["../model/log_entry"], function (LogEntry) {
             model().send(client("x"), node("c"), {type:"Query", mode:"R"}, function () {
                 model().send(node("c"), client("x"), {type:"Results"});
             });
-            model().subtitle = '<h2>... or a READ node.</h2>'
+            model().subtitle = '<h2>... or a READ instance.</h2>'
                            + model().controls.html();
             layout.invalidate();
             client("x")._value="";
+        })
+        .after(100, wait).indefinite()
+        .after(400, function () {
+            frame.snapshot();
+            model().send(client("x"), node("a"), {type:"Query", mode:"R"}, function () {
+                model().send(node("a"), client("x"), {type:"Results"});
+            });
+            model().subtitle = '<h2>The client also refreshes its routing table periodically<sup>*</sup> against one of the ROUTE instances.</h2>'
+                            + '<h5>* every 5 minutes by default, configurable with <em>dbms.routing_ttl</em></h5>'
+                           + model().controls.html();
+            layout.invalidate();
         })
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
             node("c")._state = "leader";
             node("b")._state = "follower";
-            node("a")._state = "follower";
+            node("a")._state = "stopped";
             //node("a")._value = "X";
             client("x")._url=""
 
-            model().subtitle = '<h2>When there\'s a change in the cluster, like a node stopping, or a new leader election, the client\'s routing table becomes stale</h2>'
+            model().subtitle = '<h2>If there\'s a change in the cluster during that time, like a node stopping, or a new leader election, the client\'s routing table becomes stale.</h2>'
+                           + '<h2>That may cause errors...</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
         .after(800, wait).indefinite()
+        .after(400, function () {
+            frame.snapshot();
+            client("x")._value="";
+            model().send(client("x"), node("a"), {type:"Query", mode:"R"});
+            model().subtitle = '<h2>... like an attempt to query a stopped instance.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(100, wait).indefinite()
+        .after(400, function () {
+            frame.snapshot();
+            client("x")._value="";
+            client("x")._log=[];
+            client("x")._log.push(new LogEntry(model(), 1, "blue", "READ=c.domain.com,rr.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+            client("x")._log.push(new LogEntry(model(), 3, "blue", "ROUTE=b.domain.com,c.domain.com"));
+
+            model().subtitle = '<h2>In such case, the client will remove the unreachable instance from its curent routing table.</h2>'
+                           + model().controls.html();
+            layout.invalidate();
+        })
+        .after(100, wait).indefinite()
         .after(400, function () {
             frame.snapshot();
             client("x")._value="W";
@@ -128,7 +177,7 @@ define(["../model/log_entry"], function (LogEntry) {
                     layout.invalidate();
                 });
             });
-            model().subtitle = '<h2>As soon as a query fails to reach a server or is rejected because of bad routing...</h2>'
+            model().subtitle = '<h2>... or an attempt to write to a READ instance.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -136,32 +185,21 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(400, function () {
             frame.snapshot();
             client("x")._value="";
-            model().send(client("x"), node("a"), {type:"Query", mode:"R"}, function () {
-                model().send(node("a"), client("x"), {type:"Results"}, function () {
+            model().send(client("x"), node("b"), {type:"Query", mode:"R"}, function () {
+                model().send(node("b"), client("x"), {type:"Results"}, function () {
                     client("x")._log=[];
-                    client("x")._log.push(new LogEntry(model(), 1, "blue", "READ=a.domain.com,b.domain.com,rr.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 1, "blue", "READ=b.domain.com,rr.domain.com"));
                     client("x")._log.push(new LogEntry(model(), 2, "blue", "WRITE=c.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 3, "blue", "ROUTE=b.domain.com,c.domain.com"));
                     layout.invalidate();
                 });
             });
-            model().subtitle = '<h2>... the client will request a new routing table.</h2>'
+            model().subtitle = '<h2>In that case, the client will immediately refresh its routing table.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
         .after(100, wait).indefinite()
-        .after(400, function () {
-            frame.snapshot();
-            
-            // client("x")._electionTimeout=60000
-            // client("x")._electionTimer = frame.after(client("x")._electionTimeout, function() {
-            //     model().send(client("x"), node("a"), {type:"Query", mode:"R"});
-            // });
-            model().subtitle = '<h2>The client also refreshes its routing table periodically every 5 minutes<sup>*</sup>.</h2>'
-                            + '<h5>* configurable with <em>dbms.routing_ttl</em></h5>'
-                           + model().controls.html();
-            layout.invalidate();
-        })
-        .after(100, wait).indefinite()
+
 
         .after(1, function () {
             player.next();

@@ -55,7 +55,7 @@ define(["../model/log_entry"], function (LogEntry) {
         //------------------------------
         .after(1, function () {
             frame.snapshot();
-            model().subtitle =  '<h3>We\'ve seen that the client connects to a core instance to retrieve the routing table.</h3>'
+            model().subtitle =  '<h3>We\'ve seen that the client connects on startup to a core instance to retrieve the routing table.</h3>'
                            + '<h2>But what if that server is down?</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -97,9 +97,9 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, function () {
             frame.snapshot();
             
-            client("dns")._log.push(new LogEntry(model(), 1, 1, "cluster.domain.com => IP@ a"));
-            client("dns")._log.push(new LogEntry(model(), 2, 1, "cluster.domain.com => IP@ b"));
-            client("dns")._log.push(new LogEntry(model(), 3, 1, "cluster.domain.com => IP@ c"));
+            client("dns")._log.push(new LogEntry(model(), 1, "grey", "cluster.domain.com => IP@ a"));
+            client("dns")._log.push(new LogEntry(model(), 2, "grey", "cluster.domain.com => IP@ b"));
+            client("dns")._log.push(new LogEntry(model(), 3, "grey", "cluster.domain.com => IP@ c"));
             client("dns")._url = "DNS";
             
             //layout.invalidate();
@@ -144,8 +144,9 @@ define(["../model/log_entry"], function (LogEntry) {
                            + model().controls.html();
             model().send(client("x"), node("c"), {type:"Query"}, function () {
                 model().send(node("c"), client("x"), {type:"Results"}, function () {
-                    client("x")._log.push(new LogEntry(model(), 1, 1, "READ=c.domain.com,rr.domain.com"));
-                    client("x")._log.push(new LogEntry(model(), 2, 1, "WRITE=b.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 1, "black", "READ=c.domain.com,rr.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+                    client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=b.domain.com,c.domain.com"));
                     layout.invalidate();
                 })
             });
@@ -239,8 +240,9 @@ define(["../model/log_entry"], function (LogEntry) {
             model().send(client("LB"), node("b"), {type:"Query"}, function () {
                  model().send(node("b"), client("LB"), {type:"Results"}, function () {
                      model().send(client("LB"), client("x"), {type:"Results"}, function () {
-                         client("x")._log.push(new LogEntry(model(), 1, 1, "READ=c.domain.com,rr.domain.com"));
-                         client("x")._log.push(new LogEntry(model(), 2, 1, "WRITE=b.domain.com"));
+                         client("x")._log.push(new LogEntry(model(), 1, "black", "READ=c.domain.com,rr.domain.com"));
+                         client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+                         client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=b.domain.com,c.domain.com"));
                          layout.invalidate();
                      });
                  });
@@ -294,8 +296,9 @@ define(["../model/log_entry"], function (LogEntry) {
             //model().send(client("x"), node("a"), {type:"Query"}, function () {
                 model().send(client("x"), node("b"), {type:"Query"}, function () {
                     model().send(node("b"), client("x"), {type:"Results"}, function () {
-                        client("x")._log.push(new LogEntry(model(), 1, 1, "READ=c.domain.com,rr.domain.com"));
-                        client("x")._log.push(new LogEntry(model(), 2, 1, "WRITE=b.domain.com"));
+                        client("x")._log.push(new LogEntry(model(), 1, "black", "READ=c.domain.com,rr.domain.com"));
+                        client("x")._log.push(new LogEntry(model(), 2, "black", "WRITE=b.domain.com"));
+                        client("x")._log.push(new LogEntry(model(), 3, "black", "ROUTE=b.domain.com,c.domain.com"));
                         layout.invalidate();
                     })
                 })

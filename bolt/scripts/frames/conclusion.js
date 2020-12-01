@@ -23,13 +23,13 @@ define([], function () {
         })
 
         .after(500, function () {
-            frame.model().title = '<h4 style="visibility:visible">based on <a href="http://thesecretlivesofdata.com/raft/">The secret lives of data</a> by Ben Johnson</h4>'
-                + '<h2 style="visibility:visible">.</h2>'
-                + '<h2 style="visibility:visible">For more information :</h2>'
+            frame.model().title =  '<h2 style="visibility:visible">For more information :</h2>'
                 + '<h3 style="visibility:visible"><a href="http://thesecretlivesofdata.com/raft/">Raft: Understandable Distributed Consensus</a></h3>'
                 + '<h3 style="visibility:visible"><a href="https://neo4j.com/docs/driver-manual/current/">The Neo4j Drivers Manual</a></h3>'
                 + '<h3 style="visibility:visible"><a href="https://7687.org/">7687.org : the Bolt protocol in details</a></h3>'
-                + '<br/>' + frame.model().controls.html();
+                + '<br/><br/><br/><br/><br/><br/>'
+                + '<h5 style="visibility:visible">based on <a href="http://thesecretlivesofdata.com/raft/">The secret lives of data</a> by Ben Johnson</h5>'
+                + frame.model().controls.html();
             layout.invalidate();
         })
         
