@@ -90,6 +90,10 @@ define(["../model/log_entry"], function (LogEntry) {
             frame.snapshot();
             model().nodeLabelVisible = false;
             model().zoom([node("a"),node("b"),node("c")]);
+            node("a")._address="";
+            node("b")._address="";
+            node("c")._address="";
+            client("x")._url="";
             model().subtitle = '<h2>Read replicas can also be added to the cluster to scale out reads.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -103,6 +107,9 @@ define(["../model/log_entry"], function (LogEntry) {
             model().nodes.create("rr2");
             node("rr1").type("rr");
             node("rr2").type("rr");
+            node("rr1")._address="RR";
+            node("rr2")._address="RR";
+            model().nodeLabelVisible = true;
             model().zoom(null);//[node("a"),node("b"),node("c"),node("rr1"),node("rr2")]);
             model().subtitle = '<h2>The client must discover all those instances...</h2>'
                            + model().controls.html();
@@ -158,20 +165,35 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, function () {
             frame.snapshot();
             model().nodeLabelVisible = false;
-            model().zoom([node("a"), node("b"), node("c")]);
-            model().subtitle = '<h2>To make matters worse, cluster instances can also change role over time...</h2>';
+            model().zoom(null);
+            model().subtitle = '<h2>On top of that, cluster instances can change role over time...</h2>';
          
             layout.invalidate();
         })
         .after(1200, function () {
             node("b")._state = "follower";
             node("a")._state = "leader";
-
+            node("a")._address="new leader";
+            node("b")._address="";
+            node("c")._address="";
+            node("rr1")._address="";
+            node("rr2")._address="";
+            model().nodeLabelVisible = true;
             layout.invalidate();
         })
         .after(1200, function () {
             node("c")._state = "stopped";
-            model().subtitle = model().subtitle+ '<h2> or stop.</h2>'
+            node("c")._address="stopped";
+            model().subtitle = model().subtitle+ '<h2>some may get stopped...</h2>';
+            layout.invalidate();
+        })
+        .after(1200, function () {
+            model().nodes.create("d");
+            node("d")._state = "follower";
+            node("d")._address="new joiner";
+            layout.invalidate();
+            //model().zoom([node("a"), node("b"), node("c"), node("d")]);
+            model().subtitle = model().subtitle+ '<h2> & some new ones may join.</h2>'
                            + model().controls.html();
             layout.invalidate();
         })
@@ -179,12 +201,12 @@ define(["../model/log_entry"], function (LogEntry) {
         .after(100, function () {
             frame.snapshot();
             model().zoom(null);
-            node("a")._address="Leader";
-            node("b")._address="Follower";
-            node("c")._address="Stopped";
-            node("rr1")._address="RR";
-            node("rr2")._address="RR";
-            model().nodeLabelVisible = true;
+            node("a")._address="";
+            node("b")._address="";
+            node("c")._address="";
+            node("d")._address="";
+            node("rr1")._address="";
+            node("rr2")._address="";
             model().subtitle =  '<h2>Enters the bolt+routing protocol!</h2>'
                            + model().controls.html();
             layout.invalidate();
