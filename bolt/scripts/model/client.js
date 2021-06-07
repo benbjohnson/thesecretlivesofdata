@@ -8,6 +8,9 @@ define([], function () {
         playback.DataObject.call(this, model);
         this.id = id;
         this._value = "";
+        
+        this._url = "client";
+        this._log = [];
     }
 
     Client.prototype = new playback.DataObject();
@@ -17,7 +20,20 @@ define([], function () {
      * Determines the bounding box of the client.
      */
     Client.prototype.bbox = function () {
-        return tsld.bbox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
+        var bbox = tsld.bbox(this.y - this.r, this.x + this.r, this.y + this.r, this.x - this.r);
+        bbox = bbox.union(this.logbbox());
+        return bbox;
+    };
+    Client.prototype.logbbox = function () {
+        var i, bbox;
+        if (this._log.length === 0) {
+            return null;
+        }
+        bbox = this._log[0].bbox();
+        for (i = 1; i < this._log.length; i += 1) {
+            bbox = this._log[i].bbox();
+        }
+        return bbox;
     };
 
     /**
@@ -29,6 +45,17 @@ define([], function () {
         }
         this._value = value;
         return this;
+    };
+
+    /**
+     * Retrieves the log entries.
+     */
+    Client.prototype.log = function () {
+        return this._log;
+    };
+
+    Client.prototype.url = function () {
+        return this._url;
     };
 
     /**
@@ -58,6 +85,8 @@ define([], function () {
     Client.prototype.clone = function (model) {
         var clone = new Client(model, this.id);
         clone._value = this._value;
+        clone._url = this._url;
+        clone._log = this._log.map(function (entry) { return entry.clone(model); });
         return clone;
     };
 

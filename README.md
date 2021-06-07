@@ -1,25 +1,24 @@
-The Secret Lives of Data
-========================
+The Secret Lives of Data : Bolt
+===============================
 
-> Understanding what your bits do when you're not looking.
+> This repository is based on Ben Johnson's 'The Secret Lives of Data', in which he implemented visualizations for the Raft protocol.
+> cf. https://github.com/benbjohnson/thesecretlivesofdata
+> http://thesecretlivesofdata.com/raft
 
 ## Overview
 
-So often we use databases and servers without really understanding how they work.
-The way that data flows is critical to performance and reliability.
-
-This project seeks to spread the knowledge of our systems through interactive visualization.
-If you have a system that you understand and wish to share then please add a [GitHub Issue](https://github.com/benbjohnson/thesecretlivesofdata/issues).
-Data visualization knowledge is not necessary -- just the desire to spread some knowledge.
+Here I'm adapting similar visualizations for Neo4j's Bolt protocol, and in particular to the Bolt Routing protocol, used with Neo4j Causal Clusters.
 
 
 ## Visualizations
 
-Below is a list of data visualizations and their associated Github issue.
-Please report any bugs you find or any suggestions you have for how to make these visualizations more understandable.
 
-1. [Raft: Understandable Distributed Consensus](http://thesecretlivesofdata.com/raft) ([#1](https://github.com/benbjohnson/thesecretlivesofdata/issues/1))
+1. Overview. Why do we need a routing protocol?
 
-2. Apache Kafka ([#4](https://github.com/benbjohnson/thesecretlivesofdata/issues/4)) - *Planning*
+2. Bolt + Routing : How it works.
 
-If you have suggestions for new topics, please submit a new Github issue.
+3. Initial Address Resolution. Three options : DNS round-robin, Load Balancer & Resolver function.
+
+4. [Next?] Server-side routing
+
+5. [Next?] Server groups & Routing policies

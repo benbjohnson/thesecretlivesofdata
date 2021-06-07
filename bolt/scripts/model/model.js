@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback, tsld*/
 
-define(["./controls", "./client", "./message", "./node", "./partition"], function (Controls, Client, Message, Node, Partition) {
+define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
     function Model() {
         playback.Model.call(this);
 
@@ -16,7 +16,6 @@ define(["./controls", "./client", "./message", "./node", "./partition"], functio
         this.nodes = new playback.Set(this, Node);
         this.clients = new playback.Set(this, Client);
         this.messages = new playback.Set(this, Message);
-        this.partitions = new playback.Set(this, Partition);
         this.nodeLabelVisible = true;
         this.latencies = {};
         this.bbox = tsld.bbox(0, 100, 100, 0);
@@ -164,106 +163,6 @@ define(["./controls", "./client", "./message", "./node", "./partition"], functio
                 return node.state() === "leader";
             }
         }).shift();
-    };
-
-    /**
-     * Returns the current candidates.
-     */
-    Model.prototype.candidates = function () {
-        return this.nodes.toArray().filter(function (node) {
-            return node.state() === "candidate";
-        });
-    };
-
-    /**
-     * Updates the election timers to ensure that only one will become candidate.
-     */
-    Model.prototype.ensureSingleCandidate = function () {
-        var self = this,
-            minTime = null,
-            candidateId = null,
-            nodes = this.nodes.toArray().filter(function (node) { return node.electionTimer() !== null; });
-
-        // Find earliest candidate.
-        nodes.forEach(function (node) {
-            var startTime = node.electionTimer().startTime();
-            if (minTime === null || startTime < minTime) {
-                minTime = startTime;
-                candidateId = node.id;
-            }
-        });
-
-        // Extend other candidate timers.
-        nodes.forEach(function (node) {
-            var minStartTime = minTime + self.defaultNetworkLatency * 1.25,
-                startTime = node.electionTimer().startTime();
-            if (node.id !== candidateId && startTime < minStartTime) {
-                node.electionTimer().startTime(minStartTime);
-            }
-        });        
-
-        return candidateId;
-    };
-
-    /**
-     * Updates the election timers to ensure that a specific node will become candidate.
-     */
-    Model.prototype.ensureExactCandidate = function (candidateId) {
-        var self = this,
-            nodes = this.nodes.toArray().filter(function (node) { return node.id != candidateId && node.electionTimer() !== null; }),
-            minTime = this.nodes.find(candidateId).electionTimer().startTime();
-
-        // Extend other candidate timers.
-        nodes.forEach(function (node) {
-            var minStartTime = minTime + (self.defaultNetworkLatency * 1.25);
-            node.electionTimer().startTime(minStartTime);
-        });        
-    };
-
-    /**
-     * Updates the election timers to ensure that two nodes will become candidates at the same time.
-     */
-    Model.prototype.ensureSplitVote = function () {
-        var electionTime, nodes = this.nodes.toArray();
-        nodes = nodes.filter(function (node) { return node.electionTimer() !== null; });
-        nodes = nodes.sort(function (a, b) { return a.electionTimer().startTime() - b.electionTimer().startTime(); })
-
-        // Set two nodes to become candidates at the same time.
-        electionTime = nodes[0].electionTimer().startTime();
-        nodes[1].electionTimer().startTime(electionTime);
-
-        // Reset the rest to elect after at least the default network latency.
-        nodes.slice(2).forEach(function (node) {
-            if (node.electionTimer().startTime() < electionTime + self.defaultNetworkLatency) {
-                node.electionTimer().delay(self.defaultNetworkLatency);
-            }
-        });
-
-        return nodes;
-    };
-
-    /**
-     * Forces a leader to be elected immediately.
-     */
-    Model.prototype.forceImmediateLeader = function () {
-        var nodes  = this.nodes.toArray(),
-            leader = nodes[Math.floor(Math.random()*nodes.length)],
-            followers = nodes.filter(function (node) { return node !== leader; });
-        this.resetToNextTerm();
-        followers.forEach(function (node) {
-            node._leaderId = leader.id;
-            node.state("follower");
-        })
-        leader.state("leader");
-    };
-
-    /**
-     * Move all nodes to the next term so they all reset to followers.
-     */
-    Model.prototype.resetToNextTerm = function () {
-        var maxTerm = 0;
-        this.nodes.toArray().forEach(function (node) { maxTerm = Math.max(maxTerm, node.currentTerm()); });
-        this.nodes.toArray().forEach(function (node) { node.currentTerm(maxTerm + 1); });
     };
 
     /**
