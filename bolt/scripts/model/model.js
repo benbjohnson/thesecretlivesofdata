@@ -3,7 +3,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define, playback, tsld*/
 
-define(["./controls", "./client", "./message", "./node"], function (Controls, Client, Message, Node) {
+define(["./controls", "./client", "./message", "./node", "./partition", "./lb"], function (Controls, Client, Message, Node, Partition, LB) {
     function Model() {
         playback.Model.call(this);
 
@@ -15,7 +15,9 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.controls = new Controls(this);
         this.nodes = new playback.Set(this, Node);
         this.clients = new playback.Set(this, Client);
+        this.lbs = new playback.Set(this, LB);
         this.messages = new playback.Set(this, Message);
+        this.partitions = new playback.Set(this, Partition);
         this.nodeLabelVisible = true;
         this.latencies = {};
         this.bbox = tsld.bbox(0, 100, 100, 0);
@@ -59,6 +61,12 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         }
         if (ret === null) {
             ret = this.clients.find(id);
+        }
+        if (ret === null) {
+            ret = this.lbs.find(id);
+        }
+        if (ret === null) {
+            ret = this.partitions.find(id);
         }
         return ret;
     };
@@ -135,6 +143,8 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         this.nodes.removeAll();
         this.clients.removeAll();
         this.messages.removeAll();
+        this.lbs.removeAll();
+        this.partitions.removeAll();
         this.latencies = {};
     };
 
@@ -183,6 +193,8 @@ define(["./controls", "./client", "./message", "./node"], function (Controls, Cl
         clone.nodes = this.nodes.clone(clone);
         clone.clients = this.clients.clone(clone);
         clone.messages = this.messages.clone(clone);
+        clone.partitions = this.partitions.clone(clone);
+        clone.lbs = this.lbs.clone(clone);
         clone.bbox = this.bbox;
         clone.domains = {
             x: this.domains.x,

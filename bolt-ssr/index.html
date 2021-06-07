@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Bolt</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<link href="../styles/bootstrap/bootstrap-3.0.2.css" rel="stylesheet">
+	<link href="../styles/tsld/tsld.css" rel="stylesheet">
+	<script src="../scripts/jquery/jquery-2.0.3.min.js"></script>
+	<script src="../scripts/bootstrap/bootstrap-3.0.2.min.js"></script>
+	<script src="../scripts/d3/d3-3.3.9.min.js"></script>
+	<script src="../scripts/playback/playback.js"></script>
+	<script src="../scripts/tsld/tsld.js"></script>
+	<script>
+	    var require = {urlArgs: "t=" + (new Date()).getTime()};
+	</script>
+	<script data-main="scripts/index.js" src="../scripts/require/require-2.1.9.js"></script>
+</head>
+
+<body>
+	<header id="header">
+		<nav class="navbar navbar-default" role="navigation">
+			<div class="navbar-header">
+				<div class="dropdown">
+					<button type="button" class="navbar-toggle" data-toggle="dropdown">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<ul class="dropdown-menu pull-right" role="menu">
+					</ul>
+				</div>
+				<a class="navbar-brand" href="/">
+					Neo4j
+				</a>
+			</div>
+		</nav>
+	</header>
+
+	<div class="container">
+		<div id="chart">
+		</div>
+	</div>
+</body>
+</html>
