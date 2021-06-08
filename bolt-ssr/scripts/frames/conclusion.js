@@ -24,7 +24,7 @@ define([], function () {
 
         .after(500, function () {
             frame.model().title =  '<h2 style="visibility:visible">For more information :</h2>'
-                + '<h3 style="visibility:visible"><a href="../bolt-ssr/index.html">Bolt Server-Side Routing protocol</a></h3>'
+                + '<h3 style="visibility:visible"><a href="../bolt/index.html">Standard Bolt Routing protocol</a></h3>'
                 + '<h3 style="visibility:visible"><a href="http://thesecretlivesofdata.com/raft/">Raft: Understandable Distributed Consensus</a></h3>'
                 + '<h3 style="visibility:visible"><a href="https://neo4j.com/docs/driver-manual/current/">The Neo4j Drivers Manual</a></h3>'
                 + '<h3 style="visibility:visible"><a href="https://7687.org/">7687.org : the Bolt protocol in details</a></h3>'
