@@ -64,8 +64,8 @@ define([], function () {
 
                 this.exit()
                     .transition().duration(500)
-                    .select("line").style("stroke-opacity", 0)
-                    .remove();
+                    .select("line").style("stroke-opacity", 0);
+                    //.remove();
             });
     };
 

@@ -5,7 +5,7 @@
 
 define([], function () {
     var RADIUS = 5,
-        ENTRY = {x: -24, y: 7, w:60, h:4};
+        ENTRY = {x: -10, y: 7, w:60, h:4};
 
     function ClientLayout(parent) {
         this._parent = parent;

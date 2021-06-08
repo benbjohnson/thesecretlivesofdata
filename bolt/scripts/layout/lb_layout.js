@@ -64,7 +64,8 @@ define([], function () {
                     .attr("y", "2")
                     .attr("fill", "white")
                     .attr("dominant-baseline", "middle")
-                    .attr("text-anchor", "middle");
+                    .attr("text-anchor", "middle")
+                    .style("fill-opacity", 1);
                 g.append("text")
                     .attr("class", "node-description")
                     .attr("dominant-baseline", "middle")
@@ -151,7 +152,7 @@ define([], function () {
 
                 g = this.exit()
                     .each(function(d) { this.__data__.g = null });
-                g.select("text").remove();
+                g.select("text").style("fill-opacity", 0);//.remove();
                 g = g.transition().duration(500)
                 g.select("circle").style("fill-opacity", 0);
                 g.remove();
