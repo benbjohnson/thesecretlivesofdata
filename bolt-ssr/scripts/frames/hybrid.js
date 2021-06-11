@@ -26,7 +26,8 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             model().nodes.create("a");
             model().nodes.create("b");
             model().nodes.create("c");
-
+            model().nodes.create("rr");
+            node("rr")._type = "rr";
             node("b")._state = "leader";
             node("a")._state = "follower";
             node("c")._state = "follower";
@@ -43,9 +44,9 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             // p2.x2 = Math.round((node("a").x + client("csr").x) / 2);
             // p2.y1 = p2.y2 = Math.round((node("a").y + node("b").y) / 2);
             p = model().partitions.create("/");
-            p.y1 = node("b").y - 20;
+            p.y1 = node("a").y - 20;
             p.y2 = client("local").y;
-            p.x1 = node("b").x;
+            p.x1 = node("a").x;
             p.x2 = client("local").x - 20;
 
             model().subtitle = '<h2>Such configuration affects all clients whether they\'re external or local.</h2>'
@@ -62,9 +63,9 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             lb("LB-int")._url = "lb.int";
             lb("LB-int")._value = "LB";
             layout.invalidate();
-            p.y1 = node("b").y - 20;
+            p.y1 = node("a").y - 20;
             p.y2 = client("local").y;
-            p.x1 = node("b").x;
+            p.x1 = node("a").x;
             p.x2 = client("local").x - 20;
 
             client("local")._url="neo4j://lb.int:7687"; 
@@ -125,9 +126,9 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             lb("LB-int")._url = "lb.int";
             lb("LB-int")._value = "LB";
             layout.invalidate();
-            p.y1 = node("b").y - 20;
+            p.y1 = node("a").y - 20;
             p.y2 = client("local").y;
-            p.x1 = node("b").x;
+            p.x1 = node("a").x;
             p.x2 = client("local").x - 20;
 
             client("local")._url="neo4j://lb.int:7687"; 

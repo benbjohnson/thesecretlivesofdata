@@ -19,10 +19,10 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             model().nodeLabelVisible = true;
             model().clear();
             model().clients.create("x");
-
             model().nodes.create("a");
             model().nodes.create("b");
             model().nodes.create("c");
+            model().nodes.create("rr");
             layout.invalidate();
             p = model().partitions.create("-");
             p.y1 = Math.min.apply(null, model().nodes.toArray().map(function(node) { return node.y;})) - 20;
@@ -32,7 +32,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             node("b")._state = "leader";
             node("a")._state = "follower";
             node("c")._state = "follower";
-
+            node("rr")._type = "rr";
             layout.invalidate();
         })
 
@@ -51,24 +51,16 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            model().send(lb("LB"), node("a"), {type:"health"}, function () {
-                model().send(node("a"), lb("LB"), {type:"health_ok"}, function () {
-                    node("a")._address = "✔ healthy";
-                    layout.invalidate();
+            var servers=["a", "b", "c", "rr"];
+            for (let i=0; i < servers.length; i++ ) {
+                model().send(lb("LB"), node(servers[i]), {type:"health"}, function () {
+                    model().send(node(servers[i]), lb("LB"), {type:"health_ok"}, function () {
+                        node(servers[i])._address = "✔ healthy";
+                        layout.invalidate();
+                    });
                 });
-            });
-            model().send(lb("LB"), node("b"), {type:"health"}, function () {
-                model().send(node("b"), lb("LB"), {type:"health_ok"}, function () {
-                    node("b")._address = "✔ healthy";
-                    layout.invalidate();
-                });
-            });
-            model().send(lb("LB"), node("c"), {type:"health"}, function () {
-                model().send(node("c"), lb("LB"), {type:"health_ok"}, function () {
-                    node("c")._address = "✔ healthy";
-                    layout.invalidate();
-                });
-            });
+            }
+
             model().subtitle = '<h2>... that runs periodic health checks against the Neo4j instances.</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -80,6 +72,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             node("a")._address = "a.domain.com";
             node("b")._address = "b.domain.com";
             node("c")._address = "c.domain.com";
+            node("rr")._address = "rr.domain.com";
             model().subtitle = '<h2>Server-side routing must be configured on each Neo4j instance : </h2>'
                         +'<h5><em>dbms.routing.enabled=true</em></h5>'
                         +'<h5><em>dbms.routing.default_router=SERVER</em></h5>'
@@ -93,6 +86,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             node("a")._address = "a.domain.com";
             node("b")._address = "b.domain.com";
             node("c")._address = "c.domain.com";
+            node("rr")._address = "rr.domain.com";
             lb("LB")._url = "lb.ext";
             client("x")._url="neo4j://lb.ext:7687"; 
             model().send(client("x"), lb("LB"), {type:"Query"});
@@ -171,7 +165,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             frame.snapshot();
             client("x")._value="W";
             model().send(client("x"), lb("LB"), {type:"Query", mode:"W"}, function () {   
-                model().send(lb("LB"), node("a"), {type:"Query", mode:"W"});
+                model().send(lb("LB"), node("rr"), {type:"Query", mode:"W"});
             });
             model().subtitle = '<h2>Write queries, on the other hand, have to be served by the leader.</h2>'
                            +'<h2>If they end up on a follower or read replica...</h2>'
@@ -181,7 +175,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            model().send(node("a"), node("b"), {type:"Query"});
+            model().send(node("rr"), node("b"), {type:"Query"});
             model().subtitle = '<h2>... the query is automatically redirected towards the leader...</h2>'
                            + model().controls.html();
             layout.invalidate();
@@ -189,8 +183,8 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
         .after(100, wait).indefinite()
         .after(100, function () {
             frame.snapshot();
-            model().send(node("b"), node("a"), {type:"Results"}, function () {   
-                model().send(node("a"), lb("LB"), {type:"Results"}, function () {   
+            model().send(node("b"), node("rr"), {type:"Results"}, function () {   
+                model().send(node("rr"), lb("LB"), {type:"Results"}, function () {   
                     model().send(lb("LB"), client("x"), {type:"Results"}, function () {   
                         layout.invalidate();
                     });
@@ -206,7 +200,8 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             node("a")._address = "+ TCP:7688";
             node("b")._address = "+ TCP:7688";
             node("c")._address = "+ TCP:7688";
-            model().subtitle = '<h2>Note : intra-cluster Bolt redirects use an additional BOLT port on each instance <sup>*</sup></h2>'
+            node("rr")._address = "";
+            model().subtitle = '<h2>Note : intra-cluster Bolt redirects use an additional BOLT port on each core instance <sup>*</sup></h2>'
                            +'<h5>* port 7688 is enabled by default</h5>'
                            + model().controls.html();
             layout.invalidate();

@@ -23,6 +23,7 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             model().nodes.create("a");
             model().nodes.create("b");
             model().nodes.create("c");
+            model().nodes.create("rr");
             client("x")._url="client.local"; 
             node("b")._state = "leader";
             node("a")._state = "follower";
@@ -30,6 +31,8 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
             node("b")._address = "leader";
             node("a")._address = "follower";
             node("c")._address = "follower";
+            node("rr")._address = "read replica";
+            node("rr")._type = "rr";
             frame.snapshot();
             layout.invalidate();
         })
@@ -40,19 +43,13 @@ define(["../../../bolt/scripts/model/log_entry"], function (LogEntry) {
         })
         .after(1000, function () {
             frame.snapshot();
-            model().send(client("x"), node("a"), {type:"Query"}, function () {
-                model().send(node("a"), client("x"), {type:"Results"});
-                layout.invalidate();
-            } );
-            model().send(client("x"), node("b"), {type:"Query"}, function () {
-                model().send(node("b"), client("x"), {type:"Results"});
-                layout.invalidate();
-            } );
-            model().send(client("x"), node("c"), {type:"Query"}, function () {
-                model().send(node("c"), client("x"), {type:"Results"});
-                layout.invalidate();
-            } );
-
+            var servers=["a", "b", "c", "rr"];
+            for (let i=0; i < servers.length; i++ ) {
+                model().send(client("x"), node(servers[i]), {type:"Query"}, function () {
+                    model().send(node(servers[i]), client("x"), {type:"Results"});
+                    layout.invalidate();
+                } );
+            }
             layout.invalidate();
         })
         .after(100, wait).indefinite()
