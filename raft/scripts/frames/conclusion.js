@@ -25,7 +25,7 @@ define([], function () {
         .after(500, function () {
             frame.model().title = '<h2 style="visibility:visible">For more information:</h2>'
                         + '<h3 style="visibility:visible"><a href="https://raft.github.io/raft.pdf">The Raft Paper</a></h3>'
-                        + '<h3 style="visibility:visible"><a href="http://raftconsensus.github.io/">Raft Web Site</a></h3>'
+                        + '<h3 style="visibility:visible"><a href="https://raft.github.io/">Raft Web Site</a></h3>'
                         + '<br/>' + frame.model().controls.html();
             layout.invalidate();
         })
