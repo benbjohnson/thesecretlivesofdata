@@ -1,0 +1,123 @@
+<mxfile host="app.diagrams.net" modified="2023-03-08T16:33:02.871Z" agent="5.0 (Macintosh)" etag="yCOT_ET0nWf6MGM6pfaY" version="21.0.2" type="github">
+  <diagram name="Page-1" id="cEraALvTmw9Bt6EgwGF2">
+    <mxGraphModel dx="1327" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-26" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry y="220" width="820" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-17" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="250" width="590" height="305" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-22" value="XML/HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-1" target="lBQSPo_Bw-Ai64lwUH0i-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-1" value="IBM MDM Web Services" style="rounded=0;whiteSpace=wrap;html=1;labelBackgroundColor=default;fillColor=#bcf0ff;" vertex="1" parent="1">
+          <mxGeometry x="80" y="265" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-2" value="IBM Java" style="rounded=0;whiteSpace=wrap;html=1;labelBackgroundColor=default;fillColor=#bcf0ff;" vertex="1" parent="1">
+          <mxGeometry x="80" y="325" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-3" value="IBM WAS" style="rounded=0;whiteSpace=wrap;html=1;labelBackgroundColor=default;fillColor=#bcf0ff;" vertex="1" parent="1">
+          <mxGeometry x="80" y="295" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-4" value="AIX **" style="rounded=0;whiteSpace=wrap;html=1;labelBackgroundColor=default;fillColor=#bcf0ff;" vertex="1" parent="1">
+          <mxGeometry x="80" y="355" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-5" value="AIX i.e. power could be a big cost driver with power op costs being quite high" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=7;" vertex="1" parent="1">
+          <mxGeometry x="154" y="380" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-7" value="BP-A REST API&#39;s" style="whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="330" y="275" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-19" value="Read/Write" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-9" target="lBQSPo_Bw-Ai64lwUH0i-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-20" value="R/W (JDBC)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-9" target="lBQSPo_Bw-Ai64lwUH0i-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=67.5;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-9" target="lBQSPo_Bw-Ai64lwUH0i-51">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-9" value="IBM MDM Data Model schema (BP &amp;amp; SCV data)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="80" y="425" width="364" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-24" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="100" width="590" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-16" value="TCV-C Oracle Database" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="100" y="525" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-18" value="TCV Customer MDM" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="10" y="220" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-23" value="JSON/HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-21" target="lBQSPo_Bw-Ai64lwUH0i-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-21" value="Barclaycard BEM (IIB/legacy ACE)" style="whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="380" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-25" value="Real Time Integration" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="20" y="70" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-27" value="ODS" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="705" y="195" width="50" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-33" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="270" width="160" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-29" value="Triumph" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="720" y="282.5" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-30" value="BPF Centrac" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="650" y="365" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-31" value="Other sources" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="720" y="370" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-32" value="Customer System" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="650" y="282.5" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-34" value="TCV-C Source Systems" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640" y="240" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-35" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="4" y="630" width="820" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-36" value="Batch Integration" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry y="610" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.658;entryY=-0.178;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-37" target="lBQSPo_Bw-Ai64lwUH0i-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-37" value="TCV-C Inbound ETL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="115" y="690" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=-15;entryPerimeter=0;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-38" target="lBQSPo_Bw-Ai64lwUH0i-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-38" value="TCV-C Outbound ETL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="520" y="700" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-40" value="Other batch integration components &lt;br&gt;..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="294" y="760" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.855;exitY=1;exitDx=0;exitDy=-4.35;exitPerimeter=0;dashed=1;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-9" target="lBQSPo_Bw-Ai64lwUH0i-38">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-43" value="Bankworks" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="755" y="490" width="40" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-51" value="TCV-C Pub/Sub (IBM MQ)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="610" y="510" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="lBQSPo_Bw-Ai64lwUH0i-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="lBQSPo_Bw-Ai64lwUH0i-43" target="lBQSPo_Bw-Ai64lwUH0i-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
